@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# Define the name of your Spring Boot application JAR file
+APP_JAR="your-application.jar"
+
+start() {
+    echo "Starting the Spring application..."
+    nohup java -jar $APP_JAR > /dev/null 2>&1 &
+    echo "Spring application started."
+}
+
+stop() {
+    echo "Stopping the Spring application..."
+    PID=$(pgrep -f $APP_JAR)
+    if [ -n "$PID" ]; then
+        kill $PID
+        echo "Spring application stopped."
+    else
+        echo "Spring application is not running."
+    fi
+}
+
+restart() {
+    stop
+    start
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart)
+        restart
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit 0
+

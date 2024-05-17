@@ -1,0 +1,4 @@
+./spring_daemon.sh start
+./spring_daemon.sh stop
+./spring_daemon.sh restart
+
