@@ -1,0 +1,30 @@
+import java.io.*;
+
+public class ExecuteShellScript {
+    public static void main(String[] args) {
+        try {
+            // Path to your shell script
+            String scriptPath = "/path/to/your/script.sh";
+            
+            // Create ProcessBuilder instance
+            ProcessBuilder pb = new ProcessBuilder(scriptPath);
+            
+            // Start the process
+            Process process = pb.start();
+            
+            // Read output, if any
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line);
+            }
+            
+            // Wait for the process to finish
+            int exitCode = process.waitFor();
+            System.out.println("Script executed with exit code: " + exitCode);
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
