@@ -1,0 +1,25 @@
+#!/bin/ksh
+
+# Define a function that takes parameters
+greet() {
+    local name=$1  # Access the first parameter passed to the function
+    print "Hello, $name!"
+}
+
+# Call the function with a parameter
+greet "Alice"
+
+
+
+#!/bin/ksh
+
+# Define a function that takes multiple parameters
+sum() {
+    local num1=$1
+    local num2=$2
+    local result=$((num1 + num2))
+    print "Sum of $num1 and $num2 is: $result"
+}
+
+# Call the function with multiple parameters
+sum 10 20
