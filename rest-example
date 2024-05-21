@@ -1,0 +1,28 @@
+public class RequestObject {
+    private String name;
+    private int age;
+    
+    // Getters and setters
+}
+
+public class ResponseObject {
+    private String message;
+    
+    // Constructor, getters, and setters
+}
+
+
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api")
+public class ApiController {
+
+    @PostMapping("/example")
+    public ResponseObject postExample(@RequestBody RequestObject request) {
+        // Process the request and create the response
+        String message = "Hello, " + request.getName() + "! You are " + request.getAge() + " years old.";
+        return new ResponseObject(message);
+    }
+}
+
