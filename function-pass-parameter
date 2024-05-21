@@ -1,0 +1,27 @@
+#!/bin/bash
+
+function demo {
+  local greet="Hello World!"
+  echo ${greet}
+}
+
+# Call the function and capture its output
+output=$(demo)
+echo ${output}  # Outputs: Hello World!
+
+
+#!/bin/bash
+
+function add_numbers {
+  local num1=$1  # First argument
+  local num2=$2  # Second argument
+
+  # Assign the sum to a global variable
+  result=$((${num1} + ${num2}))
+}
+
+# Call the function with two numbers as arguments
+add_numbers 5 7
+
+# Access the global variable
+echo "The sum is: ${result}"  # Outputs: The sum is: 12

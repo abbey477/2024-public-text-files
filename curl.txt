@@ -1,0 +1,74 @@
+#!/bin/bash
+
+# Endpoint URL
+URL="https://api.example.com/resource"
+
+# Perform GET request using curl
+response=$(curl -s -X GET "$URL")
+
+# Print response
+echo "Response:"
+echo "$response"
+
+======================================================================================
+
+#!/bin/bash
+
+# Endpoint URL
+URL="https://api.example.com/resource"
+
+# JSON payload for the POST request
+payload='{"key1": "value1", "key2": "value2"}'
+
+# Perform POST request using curl
+response=$(curl -s -X POST -H "Content-Type: application/json" -d "$payload" "$URL")
+
+# Print response
+echo "Response:"
+echo "$response"
+
+==========================================================================================
+
+#!/bin/bash
+
+# Function to make GET request to an endpoint
+# Usage: get_data <parameter>
+get_data() {
+    # Endpoint URL with parameter
+    URL="https://api.example.com/resource?param=$1"
+    
+    # Perform GET request using curl
+    response=$(curl -s -X GET "$URL")
+    
+    # Print response
+    echo "Response for parameter $1:"
+    echo "$response"
+}
+
+# Example usage of the function with a parameter
+get_data "example_parameter"
+
+
+====================================================================================
+curl https://somewhere.com/somepath   \
+--silent \
+--insecure \
+--request POST \
+--header "your-curl-may-want-a-header" \
+--data @my.input.file \
+--output site.output \
+--write-out %{http_code} \
+  > http.response.code 2> error.messages
+errorLevel=$?
+httpResponse=$(cat http.response.code)
+
+
+jq --raw-output 'keys | @csv' site.output | sed 's/"//g' > return.keys
+hasErrors=`grep --quiet --invert errors return.keys;echo $?`
+
+if [[ $errorLevel -gt 0 ]] || [[ $hasErrors -gt 0 ]] || [[ "$httpResponse" != "200" ]]; then
+  echo -e "Error POSTing https://somewhere.com/somepath with input my.input (errorLevel $errorLevel, http response code $httpResponse)" >> error.messages
+  send_exit_message # external function to send error.messages to whoever.
+fi
+
+========================================================================================================================
