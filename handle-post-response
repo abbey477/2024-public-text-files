@@ -1,1 +1,32 @@
 
+https://til.juliusgamanyi.com/posts/bash-save-curl-response-code-and-body-in-variable/
+
+#!/bin/bash
+
+URL="https://example.com"
+
+response=$(curl --silent --write-out "%{http_code}" $URL)
+
+http_code=$(tail -n1 <<< "$response")  # get the last line
+content=$(sed '$ d' <<< "$response")   # get all but the last line which contains the status code
+
+echo "$http_code"
+echo "$content"
+
+# do something with the http_code, such as
+if [[ "http_code" -ne 201 ]]; then
+    echo "Create failed."
+    exit 1
+fi
+
+
+========================== from chat gpt ======================
+# Make the curl request and capture the output in a variable
+response=$(curl -s -X POST \
+  -d '{"key1":"value1","key2":"value2"}' \
+  -H "Content-Type: application/json" \
+  --write-out "HTTP response code: %{http_code}\nTotal time: %{time_total}\n" \
+  https://your-api-endpoint.com/resource)
+
+# Output the captured response
+echo "$response"
