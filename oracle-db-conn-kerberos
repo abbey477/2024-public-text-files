@@ -1,1 +1,66 @@
 
+spring.datasource.url=jdbc:oracle:thin:@//<hostname>:<port>/<service_name>
+spring.datasource.driver-class-name=oracle.jdbc.driver.OracleDriver
+spring.datasource.kerberos.enabled=true
+spring.datasource.kerberos.realm=YOUR_REALM
+spring.datasource.kerberos.krb5.conf=PATH_TO_YOUR_KRB5_CONF
+spring.datasource.kerberos.keytab=PATH_TO_YOUR_KEYTAB
+spring.datasource.kerberos.principal=YOUR_PRINCIPAL
+
+
+import org.apache.commons.dbcp2.BasicDataSource;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import javax.sql.DataSource;
+
+@Configuration
+public class DatabaseConfig {
+
+    @Value("${spring.datasource.url}")
+    private String url;
+
+    @Value("${spring.datasource.kerberos.enabled}")
+    private boolean kerberosEnabled;
+
+    @Value("${spring.datasource.kerberos.realm}")
+    private String realm;
+
+    @Value("${spring.datasource.kerberos.krb5.conf}")
+    private String krb5Conf;
+
+    @Value("${spring.datasource.kerberos.keytab}")
+    private String keytab;
+
+    @Value("${spring.datasource.kerberos.principal}")
+    private String principal;
+
+    @Bean
+    public DataSource dataSource() {
+        if (kerberosEnabled) {
+            return kerberosDataSource();
+        } else {
+            return basicDataSource();
+        }
+    }
+
+    private DataSource basicDataSource() {
+        BasicDataSource dataSource = new BasicDataSource();
+        dataSource.setUrl(url);
+        dataSource.setDriverClassName("oracle.jdbc.driver.OracleDriver");
+        // Set other properties like username and password if needed
+        return dataSource;
+    }
+
+    private DataSource kerberosDataSource() {
+        // Implement Kerberos-specific datasource configuration
+        // Example: use Hadoop's UserGroupInformation to obtain a KerberosTicket
+        // and then use it for authentication
+        // You may need to use additional libraries or frameworks to handle Kerberos authentication
+        throw new UnsupportedOperationException("Kerberos authentication is not implemented");
+    }
+}
+
+
+
