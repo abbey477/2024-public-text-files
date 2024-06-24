@@ -1,1 +1,36 @@
 
+import java.util.Optional;
+
+public class OrElseThrowExample {
+
+    public static void main(String[] args) {
+        // Example 1: Optional with a value
+        Optional<String> optionalWithValue = Optional.of("Hello, world!");
+        try {
+            // This will return the value "Hello, world!"
+            String value = optionalWithValue.orElseThrow();
+            System.out.println("Value: " + value);
+        } catch (Exception e) {
+            System.out.println("Exception: " + e.getMessage());
+        }
+
+        // Example 2: Empty Optional
+        Optional<String> emptyOptional = Optional.empty();
+        try {
+            // This will throw a NoSuchElementException
+            String value = emptyOptional.orElseThrow();
+            System.out.println("Value: " + value);
+        } catch (Exception e) {
+            System.out.println("Exception: " + e.getMessage());
+        }
+
+        // Example 3: Optional with a custom exception
+        try {
+            // This will throw a custom exception
+            String value = emptyOptional.orElseThrow(() -> new IllegalArgumentException("No value present!"));
+            System.out.println("Value: " + value);
+        } catch (Exception e) {
+            System.out.println("Exception: " + e.getMessage());
+        }
+    }
+}
