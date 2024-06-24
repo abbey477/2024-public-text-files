@@ -94,3 +94,49 @@ public class AsyncHttpClientExample {
         httpclient.close();
     }
 }
+
+
+===============================================================================================================
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
+
+import java.io.IOException;
+
+public class HttpClientExample {
+    public static void main(String[] args) {
+        // Create an instance of CloseableHttpClient
+        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            // Prepare an HTTP POST request
+            HttpPost postRequest = new HttpPost("http://www.example.com/api/resource");
+
+            // Set headers if needed
+            postRequest.setHeader("Content-Type", "application/json");
+
+            // Set the request body
+            String json = "{\"key\":\"value\"}";
+            StringEntity entity = new StringEntity(json);
+            postRequest.setEntity(entity);
+
+            // Execute the request
+            try (CloseableHttpResponse response = httpClient.execute(postRequest)) {
+                // Handle the response
+                HttpEntity responseEntity = response.getEntity();
+                if (responseEntity != null) {
+                    String responseString = EntityUtils.toString(responseEntity);
+                    System.out.println("Response: " + responseString);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
