@@ -28,3 +28,7 @@ public DeferredResult<String> value() throws ExecutionException, InterruptedExce
 
   return result;
 }
+
+==========================================================================================================
+
+https://www.baeldung.com/spring-rest-timeout
