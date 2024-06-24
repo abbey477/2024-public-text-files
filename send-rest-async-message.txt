@@ -34,3 +34,63 @@ public DeferredResult<String> value() throws ExecutionException, InterruptedExce
 https://www.baeldung.com/spring-rest-timeout
 
 https://www.geeksforgeeks.org/spring-boot-how-to-set-a-request-timeout-for-a-rest-api/#
+
+====================================================================================================
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.concurrent.FutureCallback;
+import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
+import org.apache.http.impl.nio.client.HttpAsyncClients;
+
+import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
+public class AsyncHttpClientExample {
+    public static void main(String[] args) throws InterruptedException, ExecutionException, IOException {
+        // Create an instance of CloseableHttpAsyncClient
+        CloseableHttpAsyncClient httpclient = HttpAsyncClients.createDefault();
+
+        // Start the client
+        httpclient.start();
+
+        // Prepare an HTTP GET request
+        HttpGet request = new HttpGet("http://www.example.com");
+
+        // Create a latch to wait for the asynchronous request to complete
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        // Execute the request asynchronously
+        Future<HttpResponse> future = httpclient.execute(request, new FutureCallback<HttpResponse>() {
+            @Override
+            public void completed(HttpResponse response) {
+                latch.countDown();
+                System.out.println("Response: " + response.getStatusLine());
+            }
+
+            @Override
+            public void failed(Exception ex) {
+                latch.countDown();
+                System.out.println("Failed: " + ex.getMessage());
+            }
+
+            @Override
+            public void cancelled() {
+                latch.countDown();
+                System.out.println("Cancelled");
+            }
+        });
+
+        // Wait for the request to complete
+        latch.await();
+
+        // Optionally, get the response directly from the future
+        HttpResponse response = future.get();
+        System.out.println("Response: " + response.getStatusLine());
+
+        // Close the client
+        httpclient.close();
+    }
+}
