@@ -32,3 +32,5 @@ public DeferredResult<String> value() throws ExecutionException, InterruptedExce
 ==========================================================================================================
 
 https://www.baeldung.com/spring-rest-timeout
+
+https://www.geeksforgeeks.org/spring-boot-how-to-set-a-request-timeout-for-a-rest-api/#
