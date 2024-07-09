@@ -1,1 +1,72 @@
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
+
+@Table("users")
+public class User {
+
+    @Id
+    private Long id;
+    private String username;
+    private String email;
+
+    // constructors, getters, and setters
+    // ...
+}
+===================================================================================================
+import org.springframework.data.jdbc.repository.query.Query;
+import org.springframework.data.repository.CrudRepository;
+
+public interface UserRepository extends CrudRepository<User, Long> {
+
+    @Query("SELECT * FROM users WHERE username = :username")
+    User findByUsername(String username);
+
+    // No need to define findAll() explicitly; it's inherited from CrudRepository
+}
+=======================================================================================================
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
+import org.springframework.test.context.jdbc.Sql;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@JdbcTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+public class UserRepositoryTests {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Test
+    @Sql("/data.sql") // Optional: Load initial data from a SQL file
+    public void testFindAllUsers() {
+        // Retrieve all users from the repository
+        Iterable<User> users = userRepository.findAll();
+
+        // Verify that the repository returns the correct number of users
+        assertNotNull(users);
+        List<User> userList = (List<User>) users;
+        assertEquals(2, userList.size()); // Assuming there are 2 users in the test data
+    }
+
+    @Test
+    @Sql("/data.sql") // Optional: Load initial data from a SQL file
+    public void testFindByUsername() {
+        String username = "testuser";
+
+        // Retrieve the user by username
+        User user = userRepository.findByUsername(username);
+
+        // Verify that the correct user is found
+        assertNotNull(user);
+        assertEquals(username, user.getUsername());
+    }
+}
+
+=====================================================================================================
