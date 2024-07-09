@@ -23,3 +23,54 @@ cat output.txt
 
 # Clean up (optional)
 rm output.txt
+
+
+===========================================================================================
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
+public class ShellScriptCaller {
+
+    public static void main(String[] args) {
+        try {
+            // Command to execute the shell script
+            String[] command = {"sh", "path/to/your/script.sh", "arg1", "arg2", "arg3"};
+
+            // Create ProcessBuilder instance
+            ProcessBuilder pb = new ProcessBuilder(command);
+
+            // Start the process
+            Process process = pb.start();
+
+            // Read the output of the shell script
+            String output = readOutput(process.getInputStream());
+
+            // Wait for the process to complete
+            int exitCode = process.waitFor();
+
+            // Print the output
+            System.out.println("Shell script output:");
+            System.out.println(output);
+
+            // Print the exit code
+            System.out.println("Exit code: " + exitCode);
+
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static String readOutput(InputStream inputStream) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        StringBuilder output = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            output.append(line).append("\n");
+        }
+        reader.close();
+        return output.toString();
+    }
+}
