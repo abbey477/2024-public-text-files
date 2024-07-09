@@ -1,1 +1,68 @@
 
+
+For Testing (using H2 in-memory database):
+Create a application-test.properties (or application-test.yml) file in your src/test/resources folder:
+
+application-test.properties:
+==============
+
+# H2 Database Configuration
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=password
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+
+# Hibernate ddl auto (create, create-drop, update)
+spring.jpa.hibernate.ddl-auto=create-drop
+=====================================================================
+For Production (using MySQL):
+Create a application-production.properties (or application-production.yml) file in your src/main/resources folder:
+
+application-production.properties:
+=============
+# MySQL Database Configuration
+spring.datasource.url=jdbc:mysql://localhost:3306/your_database_name
+spring.datasource.username=db_username
+spring.datasource.password=db_password
+spring.datasource.driverClassName=com.mysql.cj.jdbc.Driver
+spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
+
+# Hibernate ddl auto (none, validate, update)
+spring.jpa.hibernate.ddl-auto=update
+========================================================================
+
+@Configuration
+@Profile("test")
+public class TestConfig {
+    // Configuration specific to test profile
+}
+
+@Configuration
+@Profile("production")
+public class ProductionConfig {
+    // Configuration specific to production profile
+}
+
+================================================================================
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.ActiveProfiles;
+
+@DataJpaTest
+@ActiveProfiles("test")
+public class UserRepositoryTest {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Test
+    public void testUserRepository() {
+        // Write your test logic using userRepository
+    }
+}
+=================================================================================
+5. Running Tests
+When running tests (mvn test or using an IDE), Spring Boot will automatically use the H2 in-memory database configured for the test profile.
+==============================================================================================================================================
