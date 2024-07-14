@@ -1,1 +1,252 @@
 
+Creating a Java library sample project using Maven involves setting up a project structure, writing your code, configuring Maven, and building your project. Here's a step-by-step guide:
+
+### Step 1: Set Up Your Development Environment
+
+1. **Install Java Development Kit (JDK):**
+   - Ensure you have the JDK installed. You can download it from [Oracle](https://www.oracle.com/java/technologies/javase-downloads.html) or [OpenJDK](https://openjdk.java.net/install/).
+
+2. **Install Maven:**
+   - Download Maven from the [Maven website](https://maven.apache.org/download.cgi) and follow the installation instructions.
+
+### Step 2: Create Your Maven Project
+
+1. **Open a Terminal or Command Prompt.**
+
+2. **Run the Maven Archetype Command:**
+   ```sh
+   mvn archetype:generate -DgroupId=com.example -DartifactId=math-lib -DarchetypeArtifactId=maven-archetype-quickstart -DinteractiveMode=false
+   ```
+
+   - `groupId`: The group ID of your project (e.g., `com.example`).
+   - `artifactId`: The artifact ID of your project (e.g., `math-lib`).
+   - `maven-archetype-quickstart`: The archetype for a basic Maven project.
+   - `interactiveMode=false`: Runs the command without prompting for additional input.
+
+### Step 3: Navigate to Your Project Directory
+
+```sh
+cd math-lib
+```
+
+### Step 4: Project Structure
+
+After running the above commands, your project structure should look like this:
+
+```
+/math-lib
+    /src
+        /main
+            /java
+                /com
+                    /example
+                        /App.java
+        /test
+            /java
+                /com
+                    /example
+                        /AppTest.java
+    pom.xml
+```
+
+### Step 5: Modify the Project for a Library
+
+1. **Create a Library Class:**
+
+   - Create a new file named `MathOperations.java` in `src/main/java/com/example/`.
+
+   ```java
+   package com.example;
+
+   public class MathOperations {
+       public int add(int a, int b) {
+           return a + b;
+       }
+
+       public int subtract(int a, int b) {
+           return a - b;
+       }
+   }
+   ```
+
+2. **Modify the Test Class:**
+
+   - Modify `AppTest.java` or create a new test file named `MathOperationsTest.java` in `src/test/java/com/example/`.
+
+   ```java
+   package com.example;
+
+   import org.junit.jupiter.api.Test;
+   import static org.junit.jupiter.api.Assertions.*;
+
+   public class MathOperationsTest {
+       @Test
+       public void testAdd() {
+           MathOperations mo = new MathOperations();
+           assertEquals(5, mo.add(2, 3));
+       }
+
+       @Test
+       public void testSubtract() {
+           MathOperations mo = new MathOperations();
+           assertEquals(1, mo.subtract(3, 2));
+       }
+   }
+   ```
+
+### Step 6: Configure the `pom.xml`
+
+1. **Open the `pom.xml` file.**
+
+2. **Add JUnit Dependency:**
+   ```xml
+   <project xmlns="http://maven.apache.org/POM/4.0.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+       <modelVersion>4.0.0</modelVersion>
+
+       <groupId>com.example</groupId>
+       <artifactId>math-lib</artifactId>
+       <version>1.0-SNAPSHOT</version>
+
+       <dependencies>
+           <dependency>
+               <groupId>org.junit.jupiter</groupId>
+               <artifactId>junit-jupiter-api</artifactId>
+               <version>5.7.1</version>
+               <scope>test</scope>
+           </dependency>
+           <dependency>
+               <groupId>org.junit.jupiter</groupId>
+               <artifactId>junit-jupiter-engine</artifactId>
+               <version>5.7.1</version>
+               <scope>test</scope>
+           </dependency>
+       </dependencies>
+
+       <build>
+           <plugins>
+               <plugin>
+                   <groupId>org.apache.maven.plugins</groupId>
+                   <artifactId>maven-surefire-plugin</artifactId>
+                   <version>2.22.2</version>
+                   <configuration>
+                       <includes>
+                           <include>**/*Test.java</include>
+                       </includes>
+                   </configuration>
+               </plugin>
+           </plugins>
+       </build>
+   </project>
+   ```
+
+### Step 7: Build and Test Your Project
+
+1. **Build Your Project:**
+   ```sh
+   mvn clean install
+   ```
+
+2. **Run Your Tests:**
+   ```sh
+   mvn test
+   ```
+
+### Step 8: Package Your Library
+
+1. **Create the JAR File:**
+   ```sh
+   mvn package
+   ```
+
+   - The JAR file will be located in the `target` directory.
+
+### Step 9: Distribute Your Library
+
+1. **Upload to a Repository:**
+   - You can upload your JAR to a repository like Maven Central, or distribute it directly.
+
+### Example Project Summary
+
+1. **MathOperations.java:**
+   ```java
+   package com.example;
+
+   public class MathOperations {
+       public int add(int a, int b) {
+           return a + b;
+       }
+
+       public int subtract(int a, int b) {
+           return a - b;
+       }
+   }
+   ```
+
+2. **MathOperationsTest.java:**
+   ```java
+   package com.example;
+
+   import org.junit.jupiter.api.Test;
+   import static org.junit.jupiter.api.Assertions.*;
+
+   public class MathOperationsTest {
+       @Test
+       public void testAdd() {
+           MathOperations mo = new MathOperations();
+           assertEquals(5, mo.add(2, 3));
+       }
+
+       @Test
+       public void testSubtract() {
+           MathOperations mo = new MathOperations();
+           assertEquals(1, mo.subtract(3, 2));
+       }
+   }
+   ```
+
+3. **pom.xml:**
+   ```xml
+   <project xmlns="http://maven.apache.org/POM/4.0.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+       <modelVersion>4.0.0</modelVersion>
+
+       <groupId>com.example</groupId>
+       <artifactId>math-lib</artifactId>
+       <version>1.0-SNAPSHOT</version>
+
+       <dependencies>
+           <dependency>
+               <groupId>org.junit.jupiter</groupId>
+               <artifactId>junit-jupiter-api</artifactId>
+               <version>5.7.1</version>
+               <scope>test</scope>
+           </dependency>
+           <dependency>
+               <groupId>org.junit.jupiter</groupId>
+               <artifactId>junit-jupiter-engine</artifactId>
+               <version>5.7.1</version>
+               <scope>test</scope>
+           </dependency>
+       </dependencies>
+
+       <build>
+           <plugins>
+               <plugin>
+                   <groupId>org.apache.maven.plugins</groupId>
+                   <artifactId>maven-surefire-plugin</artifactId>
+                   <version>2.22.2</version>
+                   <configuration>
+                       <includes>
+                           <include>**/*Test.java</include>
+                       </includes>
+                   </configuration>
+               </plugin>
+           </plugins>
+       </build>
+   </project>
+   ```
+
+This guide should help you create a simple Java library project using Maven.
