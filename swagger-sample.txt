@@ -1,0 +1,5 @@
+https://www.baeldung.com/spring-rest-openapi-documentation
+https://www.javainuse.com/spring/boot_swagger3
+https://www.bezkoder.com/spring-boot-swagger-3/
+
+https://www.bezkoder.com/swagger-3-annotations/
