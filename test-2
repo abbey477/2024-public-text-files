@@ -97,3 +97,27 @@ When running tests (mvn test or using an IDE), Spring Boot will automatically us
         </plugin>
     </plugins>
 </build>
+========================================================================================================
+
+SELECT cols.table_name, cols.column_name, cols.position, cons.status, cons.owner
+FROM all_constraints cons, all_cons_columns cols
+WHERE cols.table_name = 'TABLE_NAME'
+AND cons.constraint_type = 'P'
+AND cons.constraint_name = cols.constraint_name
+AND cons.owner = cols.owner
+ORDER BY cols.table_name, cols.position;
+
+================
+SELECT cols.column_name
+FROM user_constraints cons
+JOIN user_cons_columns cols ON cons.constraint_name = cols.constraint_name
+WHERE cons.constraint_type = 'P'
+  AND cons.table_name = 'YOUR_TABLE_NAME';
+=================================
+
+SELECT cons.table_name, cols.column_name
+FROM user_constraints cons
+JOIN user_cons_columns cols ON cons.constraint_name = cols.constraint_name
+WHERE cons.constraint_type = 'P'
+ORDER BY cons.table_name, cols.position;
+===================================================================================================
