@@ -324,4 +324,190 @@ public class User {
 }
 ```
 
+==========================================================================================================================================================
 
+Setting up a Spring Boot project with JUnit 5 and Mockito for testing involves several steps. Here's a guide to help you through the process:
+
+### Step 1: Create a Spring Boot Project
+
+You can create a Spring Boot project using Spring Initializr (https://start.spring.io/). Select the following dependencies:
+- Spring Web
+- Spring Boot DevTools
+- Spring Data JPA (if you're using JPA)
+- H2 Database (for in-memory testing)
+- Lombok (optional, but useful for reducing boilerplate code)
+- Spring Boot Starter Test (for testing)
+
+Alternatively, you can create the project in IntelliJ IDEA by going to `File > New > Project > Spring Initializr`.
+
+### Step 2: Add Dependencies
+
+Ensure your `pom.xml` includes the necessary dependencies for JUnit 5 and Mockito. Here's an example `pom.xml` snippet:
+
+```xml
+<dependencies>
+    <!-- Spring Boot Dependencies -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>com.h2database</groupId>
+        <artifactId>h2</artifactId>
+        <scope>runtime</scope>
+    </dependency>
+    
+    <!-- Lombok (optional) -->
+    <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <scope>provided</scope>
+    </dependency>
+
+    <!-- Testing Dependencies -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-test</artifactId>
+        <scope>test</scope>
+        <exclusions>
+            <exclusion>
+                <groupId>org.junit.vintage</groupId>
+                <artifactId>junit-vintage-engine</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+    <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-junit-jupiter</artifactId>
+        <scope>test</scope>
+    </dependency>
+</dependencies>
+```
+
+### Step 3: Write a Simple Service and Controller
+
+Let's write a simple `GreetingService` and `GreetingController` for demonstration.
+
+**GreetingService.java**
+
+```java
+package com.example.demo.service;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class GreetingService {
+    public String greet(String name) {
+        return "Hello, " + name;
+    }
+}
+```
+
+**GreetingController.java**
+
+```java
+package com.example.demo.controller;
+
+import com.example.demo.service.GreetingService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class GreetingController {
+
+    @Autowired
+    private GreetingService greetingService;
+
+    @GetMapping("/greet")
+    public String greet(@RequestParam String name) {
+        return greetingService.greet(name);
+    }
+}
+```
+
+### Step 4: Write JUnit 5 and Mockito Tests
+
+Create test classes for your service and controller.
+
+**GreetingServiceTest.java**
+
+```java
+package com.example.demo.service;
+
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+class GreetingServiceTest {
+
+    private final GreetingService greetingService = new GreetingService();
+
+    @Test
+    void testGreet() {
+        String result = greetingService.greet("World");
+        assertEquals("Hello, World", result);
+    }
+}
+```
+
+**GreetingControllerTest.java**
+
+```java
+package com.example.demo.controller;
+
+import com.example.demo.service.GreetingService;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+class GreetingControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
+    private GreetingService greetingService;
+
+    @Test
+    void testGreet() throws Exception {
+        when(greetingService.greet("World")).thenReturn("Hello, World");
+
+        mockMvc.perform(get("/greet")
+                .param("name", "World"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Hello, World"));
+    }
+}
+```
+
+### Step 5: Run Your Tests
+
+You can run your tests in IntelliJ IDEA by right-clicking on the test class or method and selecting `Run`. Alternatively, you can use the command line:
+
+```bash
+./mvnw test
+```
+
+This setup will help you create a basic Spring Boot project with JUnit 5 and Mockito for unit and integration testing.
