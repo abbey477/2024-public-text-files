@@ -121,3 +121,207 @@ JOIN user_cons_columns cols ON cons.constraint_name = cols.constraint_name
 WHERE cons.constraint_type = 'P'
 ORDER BY cons.table_name, cols.position;
 ===================================================================================================
+
+Creating a JUnit 4 test case for CRUD operations using JDBC in a Spring Boot application involves several steps. Here's a step-by-step guide to help you set up and write the test case.
+
+### 1. **Set Up Your Spring Boot Application**
+
+Ensure your `pom.xml` or `build.gradle` has the necessary dependencies for Spring Boot, JUnit 4, and JDBC. Here's an example for `pom.xml`:
+
+```xml
+<dependencies>
+    <!-- Spring Boot dependencies -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-jdbc</artifactId>
+    </dependency>
+
+    <!-- JUnit 4 dependency -->
+    <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <scope>test</scope>
+    </dependency>
+    
+    <!-- H2 Database for testing -->
+    <dependency>
+        <groupId>com.h2database</groupId>
+        <artifactId>h2</artifactId>
+        <scope>test</scope>
+    </dependency>
+</dependencies>
+```
+
+### 2. **Configure Your DataSource**
+
+Configure an in-memory database for testing purposes in `src/test/resources/application-test.properties`:
+
+```properties
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=password
+spring.datasource.schema=classpath:schema.sql
+spring.datasource.data=classpath:data.sql
+```
+
+### 3. **Create Your Repository**
+
+Create a simple repository class for CRUD operations:
+
+```java
+@Repository
+public class UserRepository {
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    public void save(User user) {
+        String sql = "INSERT INTO users (id, name, email) VALUES (?, ?, ?)";
+        jdbcTemplate.update(sql, user.getId(), user.getName(), user.getEmail());
+    }
+
+    public User findById(Long id) {
+        String sql = "SELECT * FROM users WHERE id = ?";
+        return jdbcTemplate.queryForObject(sql, new Object[]{id}, new BeanPropertyRowMapper<>(User.class));
+    }
+
+    public List<User> findAll() {
+        String sql = "SELECT * FROM users";
+        return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(User.class));
+    }
+
+    public void update(User user) {
+        String sql = "UPDATE users SET name = ?, email = ? WHERE id = ?";
+        jdbcTemplate.update(sql, user.getName(), user.getEmail(), user.getId());
+    }
+
+    public void delete(Long id) {
+        String sql = "DELETE FROM users WHERE id = ?";
+        jdbcTemplate.update(sql, id);
+    }
+}
+```
+
+### 4. **Create Your Test Class**
+
+Create a test class for your repository:
+
+```java
+@RunWith(SpringRunner.class)
+@SpringBootTest
+@ActiveProfiles("test")
+public class UserRepositoryTest {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Before
+    public void setUp() {
+        jdbcTemplate.execute("CREATE TABLE users (id BIGINT PRIMARY KEY, name VARCHAR(255), email VARCHAR(255))");
+    }
+
+    @After
+    public void tearDown() {
+        jdbcTemplate.execute("DROP TABLE users");
+    }
+
+    @Test
+    public void testSave() {
+        User user = new User(1L, "John Doe", "john.doe@example.com");
+        userRepository.save(user);
+
+        User found = userRepository.findById(1L);
+        assertEquals("John Doe", found.getName());
+        assertEquals("john.doe@example.com", found.getEmail());
+    }
+
+    @Test
+    public void testFindAll() {
+        User user1 = new User(1L, "John Doe", "john.doe@example.com");
+        User user2 = new User(2L, "Jane Doe", "jane.doe@example.com");
+        userRepository.save(user1);
+        userRepository.save(user2);
+
+        List<User> users = userRepository.findAll();
+        assertEquals(2, users.size());
+    }
+
+    @Test
+    public void testUpdate() {
+        User user = new User(1L, "John Doe", "john.doe@example.com");
+        userRepository.save(user);
+
+        user.setName("John Smith");
+        userRepository.update(user);
+
+        User found = userRepository.findById(1L);
+        assertEquals("John Smith", found.getName());
+    }
+
+    @Test
+    public void testDelete() {
+        User user = new User(1L, "John Doe", "john.doe@example.com");
+        userRepository.save(user);
+        
+        userRepository.delete(1L);
+
+        assertNull(userRepository.findById(1L));
+    }
+}
+```
+
+### 5. **Create User Model**
+
+Here is a simple `User` model class:
+
+```java
+public class User {
+
+    private Long id;
+    private String name;
+    private String email;
+
+    // Constructors, getters, and setters
+    public User() {}
+
+    public User(Long id, String name, String email) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+}
+```
+
+
