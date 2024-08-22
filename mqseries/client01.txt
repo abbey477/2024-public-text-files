@@ -1,0 +1,100 @@
+Here’s a simple example of how to create a Java client using MQSeries with SSL (using a Java KeyStore - JKS) in version 9.2.
+
+### Dependencies
+
+Add the following dependencies to your `pom.xml` (if you're using Maven):
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>com.ibm.mq</groupId>
+        <artifactId>com.ibm.mq.allclient</artifactId>
+        <version>9.2.0.0</version>
+    </dependency>
+</dependencies>
+```
+
+### Keystore Setup
+
+Ensure you have your keystore (`keystore.jks`) and truststore (`truststore.jks`) ready. The keystore contains your client’s private key and certificate, while the truststore contains the public certificates of trusted entities like the MQ server.
+
+### Example Client Code
+
+This code demonstrates how to connect to an IBM MQ queue manager using SSL:
+
+```java
+import com.ibm.mq.MQEnvironment;
+import com.ibm.mq.MQQueue;
+import com.ibm.mq.MQQueueManager;
+import com.ibm.mq.constants.MQConstants;
+import com.ibm.mq.MQMessage;
+import com.ibm.mq.MQPutMessageOptions;
+
+import java.util.Hashtable;
+
+public class MQSSLClient {
+    public static void main(String[] args) {
+        try {
+            // MQ Queue Manager details
+            String queueManager = "QM1";
+            String host = "localhost";
+            int port = 1414;
+            String channel = "SSL.CHANNEL";
+            String queueName = "TEST.QUEUE";
+
+            // Set up the environment properties for SSL
+            Hashtable<String, Object> env = new Hashtable<>();
+            env.put(MQConstants.HOST_NAME_PROPERTY, host);
+            env.put(MQConstants.PORT_PROPERTY, port);
+            env.put(MQConstants.CHANNEL_PROPERTY, channel);
+            env.put(MQConstants.SSL_CIPHER_SUITE_PROPERTY, "TLS_RSA_WITH_AES_128_CBC_SHA256"); // Adjust cipher suite accordingly
+            env.put(MQConstants.TRANSPORT_PROPERTY, MQConstants.TRANSPORT_MQSERIES_CLIENT);
+
+            // SSL properties (Keystore and Truststore)
+            System.setProperty("javax.net.ssl.keyStore", "/path/to/keystore.jks");
+            System.setProperty("javax.net.ssl.keyStorePassword", "password");
+            System.setProperty("javax.net.ssl.trustStore", "/path/to/truststore.jks");
+            System.setProperty("javax.net.ssl.trustStorePassword", "password");
+
+            // Connect to MQ Queue Manager
+            MQQueueManager queueManager = new MQQueueManager(queueManager, env);
+
+            // Define the queue
+            int openOptions = MQConstants.MQOO_OUTPUT;
+            MQQueue queue = queueManager.accessQueue(queueName, openOptions);
+
+            // Create a message
+            MQMessage message = new MQMessage();
+            message.writeString("Hello from SSL MQ Client!");
+
+            // Specify message options
+            MQPutMessageOptions pmo = new MQPutMessageOptions();
+
+            // Put message on queue
+            queue.put(message, pmo);
+
+            System.out.println("Message sent successfully!");
+
+            // Close queue and disconnect
+            queue.close();
+            queueManager.disconnect();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Explanation:
+
+1. **MQEnvironment setup**: We're using a Hashtable to define the MQ environment properties like host, port, channel, and transport.
+2. **SSL Properties**: We set the system properties for the keystore and truststore using `System.setProperty()`. You should replace the paths with the actual paths to your `.jks` files.
+3. **Cipher Suite**: Adjust the cipher suite as needed. Ensure that the server and client agree on the cipher suite.
+4. **Message**: This simple example sends a string message to the queue.
+
+### Configuration on the MQ Server
+
+Ensure that your MQ server is set up for SSL communication. You'll need to configure a cipher specification for the channel and define certificates for the MQ server.
+
+Let me know if you need more detailed instructions for server configuration or further clarification on any of the steps!
