@@ -1,0 +1,155 @@
+package com.example.download;
+
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
+
+import java.io.*;
+import java.util.zip.GZIPInputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+
+public class GzipDownloader {
+
+    public static void downloadGzipFile(String url, String outputPath, String authToken) {
+        try (CloseableHttpClient client = HttpClients.createDefault()) {
+            // Create GET request
+            HttpGet request = new HttpGet(url);
+
+            // Add headers
+            request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + authToken);
+            request.addHeader(HttpHeaders.ACCEPT_ENCODING, "gzip");
+
+            // Execute request
+            HttpResponse response = client.execute(request);
+
+            // Check if response is successful
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode != 200) {
+                throw new RuntimeException("Failed to download file. Status code: " + statusCode);
+            }
+
+            // Get input stream from response
+            InputStream inputStream = response.getEntity().getContent();
+
+            // Check if response is gzipped
+            boolean isGzipped = isGzipResponse(response);
+            
+            if (isGzipped) {
+                // Handle gzipped content
+                try (GZIPInputStream gzipInputStream = new GZIPInputStream(inputStream);
+                     FileOutputStream outputStream = new FileOutputStream(outputPath)) {
+                    
+                    byte[] buffer = new byte[8192];
+                    int bytesRead;
+                    while ((bytesRead = gzipInputStream.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, bytesRead);
+                    }
+                }
+            } else {
+                // Handle non-gzipped content
+                Files.copy(inputStream, Paths.get(outputPath), StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            // Ensure response entity is fully consumed
+            EntityUtils.consume(response.getEntity());
+
+        } catch (IOException e) {
+            throw new RuntimeException("Error downloading file: " + e.getMessage(), e);
+        }
+    }
+
+    private static boolean isGzipResponse(HttpResponse response) {
+        String contentEncoding = response.getFirstHeader(HttpHeaders.CONTENT_ENCODING) != null ?
+                response.getFirstHeader(HttpHeaders.CONTENT_ENCODING).getValue() : "";
+        return contentEncoding.toLowerCase().contains("gzip");
+    }
+
+    // Version with progress monitoring
+    public static void downloadGzipFileWithProgress(String url, String outputPath, String authToken) {
+        try (CloseableHttpClient client = HttpClients.createDefault()) {
+            HttpGet request = new HttpGet(url);
+            request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + authToken);
+            request.addHeader(HttpHeaders.ACCEPT_ENCODING, "gzip");
+
+            HttpResponse response = client.execute(request);
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode != 200) {
+                throw new RuntimeException("Failed to download file. Status code: " + statusCode);
+            }
+
+            // Get content length if available
+            long contentLength = response.getEntity().getContentLength();
+            InputStream inputStream = response.getEntity().getContent();
+            boolean isGzipped = isGzipResponse(response);
+
+            // Create progress monitor
+            ProgressMonitor monitor = new ProgressMonitor(contentLength);
+
+            if (isGzipped) {
+                try (GZIPInputStream gzipInputStream = new GZIPInputStream(inputStream);
+                     FileOutputStream outputStream = new FileOutputStream(outputPath)) {
+                    
+                    byte[] buffer = new byte[8192];
+                    int bytesRead;
+                    long totalBytesRead = 0;
+
+                    while ((bytesRead = gzipInputStream.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, bytesRead);
+                        totalBytesRead += bytesRead;
+                        monitor.updateProgress(totalBytesRead);
+                    }
+                }
+            } else {
+                try (BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
+                     FileOutputStream outputStream = new FileOutputStream(outputPath)) {
+                    
+                    byte[] buffer = new byte[8192];
+                    int bytesRead;
+                    long totalBytesRead = 0;
+
+                    while ((bytesRead = bufferedInputStream.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, bytesRead);
+                        totalBytesRead += bytesRead;
+                        monitor.updateProgress(totalBytesRead);
+                    }
+                }
+            }
+
+            EntityUtils.consume(response.getEntity());
+
+        } catch (IOException e) {
+            throw new RuntimeException("Error downloading file: " + e.getMessage(), e);
+        }
+    }
+}
+
+class ProgressMonitor {
+    private final long contentLength;
+    private long lastUpdateTime = System.currentTimeMillis();
+    private static final long UPDATE_INTERVAL = 1000; // Update every second
+
+    public ProgressMonitor(long contentLength) {
+        this.contentLength = contentLength;
+    }
+
+    public void updateProgress(long bytesRead) {
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastUpdateTime >= UPDATE_INTERVAL) {
+            if (contentLength > 0) {
+                double progress = (double) bytesRead / contentLength * 100;
+                System.out.printf("Downloaded: %.2f%% (%.2f MB / %.2f MB)%n",
+                    progress,
+                    bytesRead / (1024.0 * 1024.0),
+                    contentLength / (1024.0 * 1024.0));
+            } else {
+                System.out.printf("Downloaded: %.2f MB%n", bytesRead / (1024.0 * 1024.0));
+            }
+            lastUpdateTime = currentTime;
+        }
+    }
+}
