@@ -1,0 +1,57 @@
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
+import java.util.Date;
+
+public class Main {
+
+    public static void main(String ...x ) {
+        ex1();
+    }
+
+    public static void ex() {
+        DateTimeFormatter yFormat = DateTimeFormatter.ofPattern("yyyy");  // year-of-era
+        DateTimeFormatter YFormat = DateTimeFormatter.ofPattern("YYYY");  // week-based-year
+       
+       // Check dates around year boundary
+       LocalDate[] dates = {
+           LocalDate.of(2023, 12, 31),
+           LocalDate.of(2024, 1, 1),
+           LocalDate.of(2024, 1, 2)
+       };
+
+       LocalDate[] dates1 = {LocalDate.of(2024, 12, 31),LocalDate.of(2025, 1, 1)};
+
+       for (LocalDate date : dates1) {
+           System.out.printf("%s: year-of-era (y)=%s, week-based-year (Y)=%s%n",
+               date,
+               date.format(yFormat),
+               date.format(YFormat)
+           );
+       }
+    }
+
+    public static void ex1() {
+       SimpleDateFormat yearOfEra = new SimpleDateFormat("yyyy"); // year-of-era
+       SimpleDateFormat weekBasedYear = new SimpleDateFormat("YYYY"); // week-based-year
+
+       Calendar cal = Calendar.getInstance();
+       
+       // Check dates around year boundary
+       cal.set(2024, Calendar.DECEMBER, 31);
+       printFormats(cal.getTime(), yearOfEra, weekBasedYear);
+
+       cal.set(2025, Calendar.JANUARY, 1);
+       printFormats(cal.getTime(), yearOfEra, weekBasedYear);
+   }
+
+   private static void printFormats(Date date, SimpleDateFormat yFormat, SimpleDateFormat YFormat) {
+       System.out.printf("%tF: year-of-era (y)=%s, week-based-year (Y)=%s%n",
+           date,
+           yFormat.format(date),
+           YFormat.format(date)
+       );
+   }
+
+}
