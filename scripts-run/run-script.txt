@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# Function to load environment variables from .env file
+load_env() {
+    local env_file=$1
+    if [ -f "$env_file" ]; then
+        echo "Loading environment from $env_file"
+        set -a
+        source "$env_file"
+        set +a
+    else
+        echo "Error: $env_file not found!"
+        exit 1
+    fi
+}
+
+# Function to validate required environment variables
+validate_env() {
+    local required_vars=("DB_HOST" "DB_PORT" "DB_NAME" "DB_USER" "DB_PASSWORD" "API_KEY" "APP_PORT")
+    
+    for var in "${required_vars[@]}"; do
+        if [ -z "${!var}" ]; then
+            echo "Error: Required environment variable $var is not set!"
+            exit 1
+        fi
+    done
+}
+
+# Function to display current environment configuration
+show_config() {
+    echo "Current Environment Configuration:"
+    echo "--------------------------------"
+    echo "Environment: $APP_ENV"
+    echo "Database Host: $DB_HOST"
+    echo "Database Port: $DB_PORT"
+    echo "Database Name: $DB_NAME"
+    echo "App Port: $APP_PORT"
+    echo "API Version: $API_VERSION"
+    # Don't display sensitive information like passwords and keys
+}
+
+# Main script
+main() {
+    case "$1" in
+        "prod")
+            load_env ".env.prod"
+            export APP_ENV="production"
+            ;;
+        "uat")
+            load_env ".env.uat"
+            export APP_ENV="uat"
+            ;;
+        "dev")
+            load_env ".env.dev"
+            export APP_ENV="development"
+            ;;
+        *)
+            echo "Usage: $0 {prod|uat|dev}"
+            exit 1
+            ;;
+    esac
+
+    validate_env
+    show_config
+}
+
+# Execute main function with command line argument
+main "$1"
