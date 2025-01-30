@@ -1,0 +1,76 @@
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
+import javax.net.ssl.HttpsURLConnection;
+
+public class URLConnectionFactory {
+    
+    public static URLConnection createConnection(String urlString) throws IOException {
+        URL url = new URL(urlString);
+        URLConnection connection = url.openConnection();
+        
+        // Configure common settings for all connection types
+        connection.setConnectTimeout(5000);
+        connection.setReadTimeout(5000);
+        
+        // Handle HTTP specific settings
+        if (connection instanceof HttpURLConnection) {
+            HttpURLConnection httpConn = (HttpURLConnection) connection;
+            httpConn.setRequestMethod("GET");  // or other method as needed
+            httpConn.setDoInput(true);
+        }
+        
+        // Handle HTTPS specific settings
+        if (connection instanceof HttpsURLConnection) {
+            HttpsURLConnection httpsConn = (HttpsURLConnection) connection;
+            // Configure HTTPS specific settings if needed
+            // For example, custom SSL context or hostname verifier
+        }
+        
+        return connection;
+    }
+    
+    // Overloaded method with more configuration options
+    public static URLConnection createConnection(String urlString, String method, 
+            boolean doOutput, int timeout) throws IOException {
+        URL url = new URL(urlString);
+        URLConnection connection = url.openConnection();
+        
+        connection.setConnectTimeout(timeout);
+        connection.setReadTimeout(timeout);
+        connection.setDoOutput(doOutput);
+        
+        if (connection instanceof HttpURLConnection) {
+            HttpURLConnection httpConn = (HttpURLConnection) connection;
+            httpConn.setRequestMethod(method);
+            httpConn.setDoInput(true);
+        }
+        
+        return connection;
+    }
+    
+    // Usage example
+    public static void main(String[] args) {
+        try {
+            // For HTTP
+            URLConnection httpConn = createConnection("http://example.com");
+            if (httpConn instanceof HttpURLConnection) {
+                HttpURLConnection http = (HttpURLConnection) httpConn;
+                int responseCode = http.getResponseCode();
+                System.out.println("HTTP Response Code: " + responseCode);
+            }
+            
+            // For HTTPS
+            URLConnection httpsConn = createConnection("https://example.com");
+            if (httpsConn instanceof HttpsURLConnection) {
+                HttpsURLConnection https = (HttpsURLConnection) httpsConn;
+                int responseCode = https.getResponseCode();
+                System.out.println("HTTPS Response Code: " + responseCode);
+            }
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
