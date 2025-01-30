@@ -1,0 +1,20 @@
+try {
+    // Get generic URLConnection
+    URLConnection conn = EnhancedURLConnectionFactory.getConnection("https://example.com");
+    
+    // Get HTTP connection
+    HttpURLConnection httpConn = 
+        EnhancedURLConnectionFactory.getHttpConnection("http://example.com");
+    
+    // Get HTTPS connection
+    HttpsURLConnection httpsConn = 
+        EnhancedURLConnectionFactory.getHttpsConnection("https://example.com");
+    
+    // Use the connections as needed
+    httpConn.setRequestMethod("POST");
+    httpConn.setDoOutput(true);
+    // ... continue with connection configuration and usage
+    
+} catch (IOException e) {
+    e.printStackTrace();
+}
