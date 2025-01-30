@@ -1,0 +1,40 @@
+public class EnhancedURLConnectionFactory {
+    
+    public static URLConnection getConnection(String urlString) throws IOException {
+        return createBaseConnection(urlString);
+    }
+    
+    public static HttpURLConnection getHttpConnection(String urlString) throws IOException {
+        URLConnection conn = createBaseConnection(urlString);
+        if (!(conn instanceof HttpURLConnection)) {
+            throw new IOException("URL does not support HTTP protocol");
+        }
+        return (HttpURLConnection) conn;
+    }
+    
+    public static HttpsURLConnection getHttpsConnection(String urlString) throws IOException {
+        URLConnection conn = createBaseConnection(urlString);
+        if (!(conn instanceof HttpsURLConnection)) {
+            throw new IOException("URL does not support HTTPS protocol");
+        }
+        return (HttpsURLConnection) conn;
+    }
+    
+    private static URLConnection createBaseConnection(String urlString) throws IOException {
+        URL url = new URL(urlString);
+        URLConnection connection = url.openConnection();
+        
+        // Set default configurations
+        connection.setConnectTimeout(10000);
+        connection.setReadTimeout(10000);
+        
+        if (connection instanceof HttpURLConnection) {
+            HttpURLConnection httpConn = (HttpURLConnection) connection;
+            httpConn.setRequestMethod("GET");
+            httpConn.setInstanceFollowRedirects(true);
+            httpConn.setDoInput(true);
+        }
+        
+        return connection;
+    }
+}
