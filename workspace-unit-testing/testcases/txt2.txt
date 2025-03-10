@@ -1,0 +1,195 @@
+To simulate a `JsonProcessingException` in a unit test and verify how your code handles it, you need to use mocking techniques. The key is to mock the JSON serialization/deserialization process to throw the exception deliberately. Here's how to do it:
+
+## Method 1: Mock ObjectMapper
+
+```java
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class YourServiceTest {
+
+    @Mock
+    private ObjectMapper objectMapper;
+
+    @InjectMocks
+    private YourService yourService;
+
+    @Test
+    void shouldHandleJsonProcessingException() throws JsonProcessingException {
+        // Arrange
+        User user = new User("John", "Doe");
+        
+        // Mock the ObjectMapper to throw JsonProcessingException
+        when(objectMapper.writeValueAsString(any(User.class)))
+                .thenThrow(new JsonProcessingException("Simulated exception") {});
+        
+        // Act & Assert
+        Exception exception = assertThrows(ServiceException.class, () -> {
+            yourService.convertToJson(user);
+        });
+        
+        assertEquals("Failed to process JSON: Simulated exception", exception.getMessage());
+    }
+}
+```
+
+## Method 2: Use a Spy on a Real ObjectMapper
+
+```java
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+
+@ExtendWith(MockitoExtension.class)
+class YourServiceTest {
+
+    @Spy
+    private ObjectMapper objectMapper = new ObjectMapper();
+
+    @InjectMocks
+    private YourService yourService;
+
+    @Test
+    void shouldHandleJsonProcessingException() throws JsonProcessingException {
+        // Arrange
+        User user = new User("John", "Doe");
+        
+        // Make the spy throw JsonProcessingException
+        doThrow(new JsonProcessingException("Simulated exception") {})
+                .when(objectMapper).writeValueAsString(any(User.class));
+        
+        // Act & Assert
+        assertThrows(ServiceException.class, () -> {
+            yourService.convertToJson(user);
+        });
+    }
+}
+```
+
+## Complete Example with Service Implementation
+
+Here's a complete example showing the service being tested and the test:
+
+```java
+// Service class
+public class UserService {
+    private final ObjectMapper objectMapper;
+    
+    public UserService(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
+    
+    public String convertToJson(User user) {
+        try {
+            return objectMapper.writeValueAsString(user);
+        } catch (JsonProcessingException e) {
+            throw new ServiceException("Failed to process JSON: " + e.getMessage(), e);
+        }
+    }
+    
+    // Method that deserializes JSON
+    public User parseUser(String json) {
+        try {
+            return objectMapper.readValue(json, User.class);
+        } catch (JsonProcessingException e) {
+            throw new ServiceException("Failed to parse user JSON: " + e.getMessage(), e);
+        }
+    }
+}
+
+// Exception class
+public class ServiceException extends RuntimeException {
+    public ServiceException(String message, Throwable cause) {
+        super(message, cause);
+    }
+}
+
+// User class
+public class User {
+    private String firstName;
+    private String lastName;
+    
+    public User() {}
+    
+    public User(String firstName, String lastName) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+    }
+    
+    // Getters and setters
+}
+
+// Test class
+@ExtendWith(MockitoExtension.class)
+class UserServiceTest {
+
+    @Mock
+    private ObjectMapper objectMapper;
+
+    @InjectMocks
+    private UserService userService;
+
+    @Test
+    void shouldHandleJsonProcessingExceptionDuringSerialization() throws JsonProcessingException {
+        // Arrange
+        User user = new User("John", "Doe");
+        when(objectMapper.writeValueAsString(any(User.class)))
+                .thenThrow(new JsonProcessingException("Simulated serialization exception") {});
+        
+        // Act & Assert
+        ServiceException exception = assertThrows(ServiceException.class, () -> {
+            userService.convertToJson(user);
+        });
+        
+        assertEquals("Failed to process JSON: Simulated serialization exception", exception.getMessage());
+    }
+    
+    @Test
+    void shouldHandleJsonProcessingExceptionDuringDeserialization() throws JsonProcessingException {
+        // Arrange
+        String json = "{\"firstName\":\"John\",\"lastName\":\"Doe\"}";
+        when(objectMapper.readValue(any(String.class), any(Class.class)))
+                .thenThrow(new JsonProcessingException("Simulated deserialization exception") {});
+        
+        // Act & Assert
+        ServiceException exception = assertThrows(ServiceException.class, () -> {
+            userService.parseUser(json);
+        });
+        
+        assertEquals("Failed to parse user JSON: Simulated deserialization exception", exception.getMessage());
+    }
+}
+```
+
+**Key Points:**
+
+1. Since `JsonProcessingException` is an abstract class, you need to create an anonymous subclass when throwing it with `new JsonProcessingException("message") {}`
+
+2. Use `when().thenThrow()` for regular mocks and `doThrow().when()` for spies
+
+3. Test both serialization (object to JSON string) and deserialization (JSON string to object) scenarios
+
+4. Verify that your service properly wraps and handles the exception
+
+5. Check that the correct error message is propagated
+
+This approach allows you to thoroughly test how your code handles JSON processing errors without having to create actual invalid JSON or problematic objects.
