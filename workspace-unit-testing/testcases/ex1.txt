@@ -1,0 +1,85 @@
+Here's a unit test for the provided `getserveletPath` method. I've corrected some typos in the method signature and body to make it work properly:
+
+```java
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.context.request.WebRequest;
+
+import javax.servlet.http.HttpServletRequest;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+public class WebRequestUtilsTest {
+
+    @Mock
+    private WebRequest webRequest;
+    
+    @Mock
+    private ServletWebRequest servletWebRequest;
+    
+    @Mock
+    private HttpServletRequest httpServletRequest;
+
+    @Test
+    public void testGetServletPath() {
+        // Arrange
+        String expectedPath = "/api/users";
+        
+        // Set up the mocks chain
+        when(servletWebRequest.getRequest()).thenReturn(httpServletRequest);
+        when(httpServletRequest.getServletPath()).thenReturn(expectedPath);
+        
+        // Act
+        String result = WebRequestUtils.getServletPath(servletWebRequest);
+        
+        // Assert
+        assertEquals(expectedPath, result);
+    }
+    
+    @Test
+    public void testGetServletPathWithCast() {
+        // Arrange
+        String expectedPath = "/api/products";
+        
+        // Set up the mock chain
+        when(((ServletWebRequest) webRequest).getRequest()).thenReturn(httpServletRequest);
+        when(httpServletRequest.getServletPath()).thenReturn(expectedPath);
+        
+        // Act
+        String result = WebRequestUtils.getServletPath(webRequest);
+        
+        // Assert
+        assertEquals(expectedPath, result);
+    }
+}
+
+// Assuming this is your utility class with the corrected method
+class WebRequestUtils {
+    public static String getServletPath(WebRequest request) {
+        ServletWebRequest servletRequest = (ServletWebRequest) request;
+        return servletRequest.getRequest().getServletPath();
+    }
+}
+```
+
+Notes about the test:
+
+1. I've created two test cases:
+   - One where you pass a `ServletWebRequest` directly
+   - One where you pass a `WebRequest` that needs to be cast to `ServletWebRequest`
+
+2. The tests use Mockito to mock the chain of objects:
+   - `WebRequest` → `ServletWebRequest` → `HttpServletRequest`
+
+3. I've corrected the following issues from the original code:
+   - Fixed typo in method name from `getserveletPath` to `getServletPath`
+   - Fixed parameter name from `requst` to `request`
+   - Fixed typo in variable name from `servletrequest` to `servletRequest`
+   - Changed return type from `string` to `String` (Java uses uppercase for class names)
+
+4. These tests verify that the method correctly extracts the servlet path from the request object chain.
