@@ -1,0 +1,99 @@
+import java.util.LinkedList;
+import java.util.Iterator;
+
+/**
+ * This class demonstrates basic usage of Java's built-in LinkedList implementation.
+ * java.util.LinkedList is a doubly-linked list implementation of the List and Deque interfaces.
+ */
+public class LinkedListExample {
+    
+    public static void main(String[] args) {
+        // Create a new LinkedList of Strings
+        LinkedList<String> linkedList = new LinkedList<>();
+        
+        // Adding elements to the LinkedList
+        System.out.println("Adding elements to the LinkedList:");
+        linkedList.add("First");             // Add to the end
+        linkedList.add("Third");             // Add to the end
+        linkedList.add(1, "Second");         // Insert at specific position
+        linkedList.addFirst("Start");        // Add to the beginning
+        linkedList.addLast("End");           // Add to the end
+        
+        System.out.println("LinkedList after adding elements: " + linkedList);
+        System.out.println("Size of the LinkedList: " + linkedList.size());
+        
+        // Accessing elements
+        System.out.println("\nAccessing elements:");
+        System.out.println("First element: " + linkedList.getFirst());
+        System.out.println("Last element: " + linkedList.getLast());
+        System.out.println("Element at index 2: " + linkedList.get(2));
+        System.out.println("Index of 'Third': " + linkedList.indexOf("Third"));
+        
+        // Updating elements
+        System.out.println("\nUpdating elements:");
+        linkedList.set(1, "Updated First");
+        System.out.println("LinkedList after updating index 1: " + linkedList);
+        
+        // Removing elements
+        System.out.println("\nRemoving elements:");
+        String removedFirst = linkedList.removeFirst();
+        System.out.println("Removed first element: " + removedFirst);
+        
+        String removedLast = linkedList.removeLast();
+        System.out.println("Removed last element: " + removedLast);
+        
+        boolean removed = linkedList.remove("Second");
+        System.out.println("Removed 'Second': " + removed);
+        
+        System.out.println("LinkedList after removals: " + linkedList);
+        
+        // Using LinkedList as a Queue (FIFO)
+        System.out.println("\nUsing LinkedList as a Queue:");
+        LinkedList<String> queue = new LinkedList<>();
+        queue.offer("First");    // Add to the queue
+        queue.offer("Second");   // Add to the queue
+        queue.offer("Third");    // Add to the queue
+        
+        System.out.println("Queue: " + queue);
+        System.out.println("Poll (removes and returns the head): " + queue.poll());
+        System.out.println("Peek (returns the head without removing): " + queue.peek());
+        System.out.println("Queue after poll: " + queue);
+        
+        // Using LinkedList as a Stack (LIFO)
+        System.out.println("\nUsing LinkedList as a Stack:");
+        LinkedList<String> stack = new LinkedList<>();
+        stack.push("First");    // Add to the stack
+        stack.push("Second");   // Add to the stack
+        stack.push("Third");    // Add to the stack
+        
+        System.out.println("Stack: " + stack);
+        System.out.println("Pop (removes and returns the top): " + stack.pop());
+        System.out.println("Peek (returns the top without removing): " + stack.peek());
+        System.out.println("Stack after pop: " + stack);
+        
+        // Iterating through a LinkedList
+        System.out.println("\nIterating through the LinkedList:");
+        System.out.println("Using enhanced for loop:");
+        for (String element : linkedList) {
+            System.out.println("  Element: " + element);
+        }
+        
+        System.out.println("\nUsing Iterator:");
+        Iterator<String> iterator = linkedList.iterator();
+        while (iterator.hasNext()) {
+            String element = iterator.next();
+            System.out.println("  Element: " + element);
+            
+            // Remove element while iterating (safe)
+            if (element.equals("Updated First")) {
+                iterator.remove();
+            }
+        }
+        System.out.println("LinkedList after removing during iteration: " + linkedList);
+        
+        // Clearing the LinkedList
+        linkedList.clear();
+        System.out.println("\nLinkedList after clearing: " + linkedList);
+        System.out.println("Is the LinkedList empty? " + linkedList.isEmpty());
+    }
+}
