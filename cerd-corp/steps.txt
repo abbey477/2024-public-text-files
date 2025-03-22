@@ -1,0 +1,23 @@
+
+
+create directory if doesn't exist
+
+
+rdr-cerd-corp-app
+--deploy
+--bin
+--config
+--lib
+rdr-cerd-corp-log
+--log
+--archive
+rdr-cerd-corp-backup
+--tar- name - date
+
+
+functionx() {
+}
+
+1. do backup
+2. reset directory, or clean directory
+3. run deployment and build 
