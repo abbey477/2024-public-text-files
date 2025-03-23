@@ -1,23 +1,35 @@
 
+1. do backup
+2. reset directory, or clean directory
+3. run deployment and build 
 
-create directory if doesn't exist
 
-
-rdr-cerd-corp-app
+CERD_CORP_BASE_DIR="/apps/rdr/rdr-cerd-corp"
+CERD_CORP_APP_DIR=$CERD_CORP_BASE_DIR/app
 --deploy
 --bin
 --config
 --lib
-rdr-cerd-corp-log
+CERD_CORP_LOG_DIR=$CERD_CORP_BASE_DIR/log
 --log
 --archive
-rdr-cerd-corp-backup
+CERD_CORP_BKUP_DIR=$CERD_CORP_BASE_DIR/backup
 --tar- name - date
 
 
-functionx() {
-}
 
-1. do backup
-2. reset directory, or clean directory
-3. run deployment and build 
+-- if not exist create => CERD_CORP_BASE_DIR
+--               cd to => CERD_CORP_BASE_DIR
+
+
+
+pre-backup-process:
+-- check if barkup directory exist otherwise create it.
+backup-process:
+-- move current working directory to backup with timestamp
+-- optional tar if neccessary
+post backup_process:
+-- create clean deploy directory for new setup.
+deployment process:
+-- commence build and deployment process.
+
