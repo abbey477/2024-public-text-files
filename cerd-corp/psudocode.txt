@@ -1,12 +1,18 @@
 
-1. do backup
-2. reset directory, or clean directory
-3. run deployment and build 
+
+-- create base directory if not exist  ---> 1
+-- create deploy directory if not exist ---> 1
+
+-- pre-backup-process
+-- clean or clear the content of DEPLOY directory ---> *
+-- build and deploy to the DEPLOY directory
+-- explode the built tar file to the APPS directory
+
 
 
 CERD_CORP_BASE_DIR="/apps/rdr/rdr-cerd-corp"
+CERD_CORP_APPS_DIR=$CERD_CORP_BASE_DIR/deploy
 CERD_CORP_APPS_DIR=$CERD_CORP_BASE_DIR/apps
-    --deploy
     --bin
     --config
     --lib
