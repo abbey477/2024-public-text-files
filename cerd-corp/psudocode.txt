@@ -5,12 +5,12 @@
 
 
 CERD_CORP_BASE_DIR="/apps/rdr/rdr-cerd-corp"
-CERD_CORP_APP_DIR=$CERD_CORP_BASE_DIR/apps
+CERD_CORP_APPS_DIR=$CERD_CORP_BASE_DIR/apps
     --deploy
     --bin
     --config
     --lib
-CERD_CORP_LOG_DIR=$CERD_CORP_BASE_DIR/logs
+CERD_CORP_LOGS_DIR=$CERD_CORP_BASE_DIR/logs
     --log-current
     --log-archive
 CERD_CORP_BKUP_DIR=$CERD_CORP_BASE_DIR/backups
