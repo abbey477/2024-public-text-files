@@ -2,6 +2,11 @@
 
 -- create base directory if not exist  ---> 1
 -- create deploy directory if not exist ---> 1
+-- create log dir
+-- create log archive
+-- create backup directory
+
+
 
 -- pre-backup-process
 -- clean or clear the content of DEPLOY directory ---> *
@@ -11,32 +16,31 @@
 
 
 CERD_CORP_BASE_DIR="/apps/rdr/rdr-cerd-corp"
-CERD_CORP_APPS_DIR=$CERD_CORP_BASE_DIR/deploy
+CERD_CORP_DEPLOY_DIR=$CERD_CORP_BASE_DIR/deploy
 CERD_CORP_APPS_DIR=$CERD_CORP_BASE_DIR/apps
     --bin
     --config
     --lib
-CERD_CORP_LOGS_DIR=$CERD_CORP_BASE_DIR/logs
-    --log-current
-    --log-archive
+CERD_CORP_LOGS_DIR=$CERD_CORP_BASE_DIR/log
+    --log.dsds.xx.log  -->file
+    --archive   --> dir
 CERD_CORP_BKUP_DIR=$CERD_CORP_BASE_DIR/backups
     --dir-name-random-num-date-time
     --dir-name-random-num-date-time
 
 
 
--- if not exist create => CERD_CORP_BASE_DIR
---               cd to => CERD_CORP_BASE_DIR
 
 
 
 pre-backup-process:
 -- check if barkup directory exist otherwise create it.
+
 backup-process:
 -- move current working directory to backup with timestamp
 -- optional tar if neccessary
-post backup_process:
--- create clean deploy directory for new setup.
+
 deployment process:
+-- create clean deploy directory for new setup.
 -- commence build and deployment process.
 
