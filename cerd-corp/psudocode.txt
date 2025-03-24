@@ -1,20 +1,5 @@
 
 
--- create base directory if not exist  ---> 1
--- create deploy directory if not exist ---> 1
--- create log dir
--- create log archive
--- create backup directory
-
-
-
--- pre-backup-process
--- clean or clear the content of DEPLOY directory ---> *
--- build and deploy to the DEPLOY directory
--- explode the built tar file to the APPS directory
-
-
-
 CERD_CORP_BASE_DIR="/apps/rdr/rdr-cerd-corp"
 CERD_CORP_DEPLOY_DIR=$CERD_CORP_BASE_DIR/deploy
 CERD_CORP_APPS_DIR=$CERD_CORP_BASE_DIR/apps
@@ -29,18 +14,26 @@ CERD_CORP_BKUP_DIR=$CERD_CORP_BASE_DIR/backups
     --dir-name-random-num-date-time
 
 
+######### BASE DIRECTORY ###########
+-- create base directory if not exist 
 
 
+##### LOG ######
+-- create log dir
+-- create log archive
 
-
-pre-backup-process:
--- check if barkup directory exist otherwise create it.
 
 backup-process:
+-- check if BACK-UP directory exist otherwise create it.
 -- move current working directory to backup with timestamp
 -- optional tar if neccessary
 
 deployment process:
--- create clean deploy directory for new setup.
+-- create clean DEPLOY directory for new setup.
+-- clean up DEPLOY directory if stuff is in it.
+
+-- create clean APPS directory for new setup.
+-- check if APPS directory is empty otherwise execute a hard stop
+ 
 -- commence build and deployment process.
 
