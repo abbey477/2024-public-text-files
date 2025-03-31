@@ -1,0 +1,4 @@
+Import new certificate to client custom truststore	 Manual
+Import new certificate to client default truststore	 Manual
+Implement Certificate Rotation-Aware TrustManager    Programmatic
+impement Certificate Monitor Expiration	             Programmatic
