@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# Function to copy a file with validation
+copy_file_with_validation() {
+    # Check if we have enough parameters
+    if [ $# -lt 2 ]; then
+        echo "ERROR: Not enough parameters!"
+        echo "Usage: $0 source_file destination_file"
+        return 1
+    fi
+
+    local SOURCE_FILE="$1"
+    local DESTINATION_FILE="$2"
+    local DESTINATION_DIR="$(dirname "$DESTINATION_FILE")"
+
+    # Check if source file exists
+    if [ ! -f "$SOURCE_FILE" ]; then
+        echo "ERROR: Source file does not exist: $SOURCE_FILE"
+        return 1
+    fi
+
+    # Check if destination directory exists
+    if [ ! -d "$DESTINATION_DIR" ]; then
+        echo "ERROR: Destination directory does not exist: $DESTINATION_DIR"
+        echo "Please create the directory first or specify a valid destination path."
+        return 1
+    fi
+
+    # Copy the file (will overwrite if exists)
+    cp -f "$SOURCE_FILE" "$DESTINATION_FILE"
+
+    # Validate the copy was successful
+    if [ $? -eq 0 ] && [ -f "$DESTINATION_FILE" ]; then
+        echo "File copied successfully!"
+        echo "Source: $SOURCE_FILE"
+        echo "Destination: $DESTINATION_FILE"
+        return 0
+    else
+        echo "Failed to copy the file!"
+        return 1
+    fi
+}
+
+# Call the function with all passed parameters
+copy_file_with_validation "$@"
+
+# Exit with the return code of the function
+exit $?
