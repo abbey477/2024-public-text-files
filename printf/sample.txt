@@ -1,0 +1,13 @@
+#!/bin/bash
+
+get_formatted_output() {
+    printf "Header: System Information\n"
+    printf "========================\n"
+    printf "Hostname: %s\n" "$(hostname)"
+    printf "Date: %s\n" "$(date)"
+    printf "User: %s\n" "$(whoami)"
+}
+
+# Usage
+info=$(get_formatted_output)
+echo "$info"
