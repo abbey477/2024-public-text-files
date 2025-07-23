@@ -203,26 +203,115 @@ public class ConfigProcessor {
 }
 ```
 
-## Usage Examples
+## Simple Example: Just Getting String Array
 
-### Example 1: Basic Usage
-
-```bash
-# Run the shell script
-./sender.sh
+### Sample Input Data
+```
+[28]|[BFA]|[Burkina Faso]|[7]|[7]|[]
+[27]|[BGR]|[Bulgaria]|[2]|[2]|[]
+[26]|[BRN]|[Brunei Darussalam]|[-]|[-]|[(5)]
+[25]|[BRA]|[Brazil]|[4]|[4]|[]
+[24]|[BWA]|[Botswana]|[3]|[3]|[]
+[23]|[BIH]|[Bosnia and Herzegovina]|[6]|[6]|[]
+[22]|[BOL]|[Bolivia]|[7]|[7]|[]
+[21]|[BTN]|[Bhutan]|[6]|[6]|[]
 ```
 
-### Example 2: Parameterized Configuration
+### Shell Script (simple_data.sh)
 
 ```bash
-# Generate configuration for different environments
-config_text=$(get_config_data "staging" "authservice" "false")
-encoded_config=$(echo "$config_text" | base64 -w 0)
+#!/bin/bash
 
-java -Dapp.config="$encoded_config" \
-     -Dapp.encoding="base64" \
-     -cp ".:lib/*" \
-     ConfigProcessor
+get_data() {
+    printf "[28]|[BFA]|[Burkina Faso]|[7]|[7]|[]\n"
+    printf "[27]|[BGR]|[Bulgaria]|[2]|[2]|[]\n"
+    printf "[26]|[BRN]|[Brunei Darussalam]|[-]|[-]|[(5)]\n"
+    printf "[25]|[BRA]|[Brazil]|[4]|[4]|[]\n"
+    printf "[24]|[BWA]|[Botswana]|[3]|[3]|[]\n"
+    printf "[23]|[BIH]|[Bosnia and Herzegovina]|[6]|[6]|[]\n"
+    printf "[22]|[BOL]|[Bolivia]|[7]|[7]|[]\n"
+    printf "[21]|[BTN]|[Bhutan]|[6]|[6]|[]\n"
+}
+
+# Get data and encode it
+data=$(get_data)
+encoded_data=$(echo "$data" | base64 -w 0)
+
+java -Dapp.data="$encoded_data" SimpleProcessor
+```
+
+### Simple Java Processor
+
+```java
+import java.util.Base64;
+import java.util.Arrays;
+
+public class SimpleProcessor {
+    
+    public static void main(String[] args) {
+        String data = System.getProperty("app.data");
+        
+        if (data == null) {
+            System.err.println("No data provided");
+            return;
+        }
+        
+        // Decode and convert to String array
+        String[] lines = getStringArray(data);
+        
+        // Use the String array
+        System.out.println("Got " + lines.length + " lines:");
+        for (int i = 0; i < lines.length; i++) {
+            System.out.println("Line " + i + ": " + lines[i]);
+        }
+    }
+    
+    private static String[] getStringArray(String encodedData) {
+        // Decode base64
+        byte[] decodedBytes = Base64.getDecoder().decode(encodedData);
+        String decodedText = new String(decodedBytes);
+        
+        // Split into array and filter empty lines
+        return Arrays.stream(decodedText.split("\n"))
+                    .filter(line -> !line.trim().isEmpty())
+                    .toArray(String[]::new);
+    }
+}
+```
+
+## Usage Examples
+
+### Example 1: Processing the Sample Data
+
+```bash
+# Run the country processor
+./process_countries.sh
+```
+
+Expected output:
+```
+Parsed 8 countries:
+================================================================================
+Rank: 28  | Code: BFA | Name: Burkina Faso            | Scores: 7/7 | Notes: None
+Rank: 27  | Code: BGR | Name: Bulgaria                | Scores: 2/2 | Notes: None
+Rank: 26  | Code: BRN | Name: Brunei Darussalam       | Scores: -/- | Notes: (5)
+Rank: 25  | Code: BRA | Name: Brazil                  | Scores: 4/4 | Notes: None
+Rank: 24  | Code: BWA | Name: Botswana                | Scores: 3/3 | Notes: None
+Rank: 23  | Code: BIH | Name: Bosnia and Herzegovina  | Scores: 6/6 | Notes: None
+Rank: 22  | Code: BOL | Name: Bolivia                 | Scores: 7/7 | Notes: None
+Rank: 21  | Code: BTN | Name: Bhutan                  | Scores: 6/6 | Notes: None
+```
+
+### Example 2: Reading from File
+
+```bash
+# Read structured data from file
+country_data=$(cat countries.txt)
+encoded_data=$(echo "$country_data" | base64 -w 0)
+
+java -Dcountry.data="$encoded_data" \
+     -Dcountry.encoding="base64" \
+     CountryProcessor
 ```
 
 ### Example 3: Direct Command Line
