@@ -111,10 +111,10 @@ public class MyJavaApp {
                 break;
         }
         
-        // Split by newlines and filter out empty lines
+        // Split by newlines and filter out empty lines - return as List
         return Arrays.stream(decodedText.split("\n"))
                     .filter(line -> !line.trim().isEmpty())
-                    .toArray(String[]::new);
+                    .collect(Collectors.toList());
     }
     
     private static void processConfigLines(String[] lines) {
@@ -245,6 +245,8 @@ java -Dapp.data="$encoded_data" SimpleProcessor
 ```java
 import java.util.Base64;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class SimpleProcessor {
     
@@ -256,25 +258,25 @@ public class SimpleProcessor {
             return;
         }
         
-        // Decode and convert to String array
-        String[] lines = getStringArray(data);
+        // Decode and convert to List<String>
+        List<String> lines = getStringList(data);
         
-        // Use the String array
-        System.out.println("Got " + lines.length + " lines:");
-        for (int i = 0; i < lines.length; i++) {
-            System.out.println("Line " + i + ": " + lines[i]);
+        // Use the List<String>
+        System.out.println("Got " + lines.size() + " lines:");
+        for (int i = 0; i < lines.size(); i++) {
+            System.out.println("Line " + i + ": " + lines.get(i));
         }
     }
     
-    private static String[] getStringArray(String encodedData) {
+    private static List<String> getStringList(String encodedData) {
         // Decode base64
         byte[] decodedBytes = Base64.getDecoder().decode(encodedData);
         String decodedText = new String(decodedBytes);
         
-        // Split into array and filter empty lines
+        // Split into List and filter empty lines
         return Arrays.stream(decodedText.split("\n"))
                     .filter(line -> !line.trim().isEmpty())
-                    .toArray(String[]::new);
+                    .collect(Collectors.toList());
     }
 }
 ```
