@@ -1,8 +1,8 @@
 # Maven JAR Publishing to Artifactory
 
 **Created:** 7/24/2025 16:34  
-**Updated:** 7/24/2025 20:09  
-**Exported:** 7/24/2025 20:45  
+**Updated:** 7/24/2025 22:16  
+**Exported:** 7/24/2025 22:17  
 **Link:** [https://claude.ai/chat/d3b15236-f8f8-4c2c-b1ad-16c1a8e240cb](https://claude.ai/chat/d3b15236-f8f8-4c2c-b1ad-16c1a8e240cb)  
 
 ## Prompt:
@@ -2782,6 +2782,1739 @@ mvn clean deploy -s target/settings.xml
 - ✅ **Environment variables** - Secure credential management
 
 The deployment is now much more straightforward - you just need to ensure the settings file is copied to target/ (which happens automatically during validate), then use the standard Maven deploy command with the `-s` flag to specify your custom settings file!
+
+
+
+## Prompt:
+I am kinda lost with the .env file, breakdown how it's used in this instance
+
+
+
+## Response:
+Great question! Let me break down how the `.env` file works in this Maven project, because it can be confusing.
+
+## **What is the .env file?**
+
+The `.env` file is **NOT** a Maven feature - it's a common convention for storing environment variables that your shell can load. Think of it as a convenient way to set multiple environment variables at once.
+
+## **How Environment Variables Work in This Project**
+
+### **Step 1: Environment Variables → Maven Properties**
+
+In your `pom.xml`, we have this:
+```xml
+<properties>
+    <artifactory.url>${env.ARTIFACTORY_URL}</artifactory.url>
+    <artifactory.username>${env.ARTIFACTORY_USERNAME}</artifactory.username>
+    <artifactory.password>${env.ARTIFACTORY_PASSWORD}</artifactory.password>
+</properties>
+```
+
+This tells Maven: "Look for environment variables called `ARTIFACTORY_URL`, `ARTIFACTORY_USERNAME`, and `ARTIFACTORY_PASSWORD`, and use their values."
+
+### **Step 2: Maven Properties → settings.xml**
+
+In your `src/main/resources/config/settings.xml`, we have:
+```xml
+<server>
+    <id>artifactory-releases</id>
+    <username>${artifactory.username}</username>
+    <password>${artifactory.password}</password>
+</server>
+```
+
+When Maven copies this file to `target/settings.xml`, it replaces:
+- `${artifactory.username}` with the value from the Maven property
+- `${artifactory.password}` with the value from the Maven property
+
+## **The .env File Workflow**
+
+### **1. Create .env file:**
+```bash
+# .env file contents
+export ARTIFACTORY_URL="https://mycompany.jfrog.io/artifactory"
+export ARTIFACTORY_USERNAME="john.doe"
+export ARTIFACTORY_PASSWORD="my-api-key-12345"
+```
+
+### **2. Load environment variables:**
+```bash
+source .env
+```
+
+This command reads the `.env` file and sets those environment variables in your current shell session.
+
+### **3. Verify variables are set:**
+```bash
+echo $ARTIFACTORY_URL
+# Output: https://mycompany.jfrog.io/artifactory
+
+echo $ARTIFACTORY_USERNAME  
+# Output: john.doe
+```
+
+### **4. Run Maven:**
+```bash
+mvn clean deploy -s target/settings.xml
+```
+
+Maven can now access those environment variables and substitute them into the settings file.
+
+## **Alternative Ways to Set Environment Variables**
+
+### **Option 1: Direct export (without .env file)**
+```bash
+export ARTIFACTORY_URL="https://mycompany.jfrog.io/artifactory"
+export ARTIFACTORY_USERNAME="john.doe"
+export ARTIFACTORY_PASSWORD="my-api-key-12345"
+
+mvn clean deploy -s target/settings.xml
+```
+
+### **Option 2: Inline with Maven command**
+```bash
+ARTIFACTORY_URL="https://mycompany.jfrog.io/artifactory" \
+ARTIFACTORY_USERNAME="john.doe" \
+ARTIFACTORY_PASSWORD="my-api-key-12345" \
+mvn clean deploy -s target/settings.xml
+```
+
+### **Option 3: IDE configuration**
+Most IDEs allow you to set environment variables for Maven runs in the run configuration.
+
+## **The Complete Flow**
+
+Let me trace through what happens:
+
+1. **You set environment variables:**
+   ```bash
+   source .env  # This loads: ARTIFACTORY_URL, ARTIFACTORY_USERNAME, ARTIFACTORY_PASSWORD
+   ```
+
+2. **Maven reads environment variables:**
+   ```xml
+   <!-- pom.xml converts env vars to Maven properties -->
+   <artifactory.username>${env.ARTIFACTORY_USERNAME}</artifactory.username>
+   ```
+
+3. **Maven processes settings.xml:**
+   ```xml
+   <!-- Original: src/main/resources/config/settings.xml -->
+   <username>${artifactory.username}</username>
+   
+   <!-- Becomes in target/settings.xml: -->
+   <username>john.doe</username>
+   ```
+
+4. **Maven uses processed settings:**
+   ```bash
+   mvn deploy -s target/settings.xml
+   # Maven reads target/settings.xml with real credentials
+   ```
+
+## **Why Use .env Instead of Hard-coding?**
+
+**❌ Bad (hard-coded credentials):**
+```xml
+<username>john.doe</username>
+<password>my-secret-password</password>
+```
+
+**✅ Good (environment variables):**
+```xml
+<username>${artifactory.username}</username>
+<password>${artifactory.password}</password>
+```
+
+**Benefits:**
+- **Security**: Credentials never stored in code
+- **Flexibility**: Different developers can use different credentials
+- **CI/CD friendly**: Build servers can inject their own credentials
+- **Git-safe**: `.env` is in `.gitignore`, so secrets aren't committed
+
+## **Troubleshooting**
+
+### **Problem: "Could not resolve placeholder"**
+```
+[ERROR] 'artifactory.username' is invalid. 
+```
+
+**Solution**: Environment variable not set. Check:
+```bash
+echo $ARTIFACTORY_USERNAME
+# Should output your username, not empty
+```
+
+### **Problem: Variables not loading**
+Make sure you're running `source .env` in the same terminal where you run Maven:
+```bash
+# Terminal 1
+source .env
+mvn deploy -s target/settings.xml  # ✅ Works
+
+# Terminal 2 (different terminal)
+mvn deploy -s target/settings.xml  # ❌ Fails - variables not loaded
+```
+
+## **Summary**
+
+The `.env` file is just a convenience tool to set multiple environment variables at once. The real magic happens when:
+1. Maven reads environment variables (`${env.VARIABLE_NAME}`)
+2. Maven substitutes them into files during the build process
+3. The processed files contain real values instead of placeholders
+
+It's a clean way to keep secrets out of your code while making configuration flexible!
+
+
+
+## Prompt:
+can source .env command placed in the deploy.sh
+
+
+
+## Response:
+Absolutely! That's actually a much better approach. Let me show you how to modify the `deploy.sh` script to automatically load the `.env` file.
+
+**Complete Maven Project - JAR Deployment to Artifactory** ∙ Version 6
+
+```markdown
+# Complete Maven Project - JAR Deployment to Artifactory
+
+This is a complete sample Maven project that demonstrates how to build a JAR and deploy it to Artifactory with settings.xml stored in the resources directory.
+
+## Project Structure
+```
+sample-jar-project/
+├── pom.xml
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/
+│   │   │       └── example/
+│   │   │           └── App.java
+│   │   └── resources/
+│   │       └── config/
+│   │           └── settings.xml
+│   └── test/
+│       └── java/
+│           └── com/
+│               └── example/
+│                   └── AppTest.java
+├── deploy.sh
+├── .env.example
+└── README.md
+```
+
+---
+
+## File: `pom.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    
+    <modelVersion>4.0.0</modelVersion>
+    
+    <!-- Project Information -->
+    <groupId>com.example</groupId>
+    <artifactId>sample-jar-project</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+    
+    <name>Sample JAR Project</name>
+    <description>A sample Maven project to demonstrate JAR deployment to Artifactory</description>
+    
+    <!-- Properties -->
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        
+        <!-- Artifactory Configuration - Override these via environment variables -->
+        <artifactory.url>${env.ARTIFACTORY_URL}</artifactory.url>
+        <artifactory.username>${env.ARTIFACTORY_USERNAME}</artifactory.username>
+        <artifactory.password>${env.ARTIFACTORY_PASSWORD}</artifactory.password>
+    </properties>
+    
+    <!-- Distribution Management - Where to deploy artifacts -->
+    <distributionManagement>
+        <repository>
+            <id>artifactory-releases</id>
+            <name>Artifactory Release Repository</name>
+            <url>${artifactory.url}/libs-release-local</url>
+        </repository>
+        <snapshotRepository>
+            <id>artifactory-snapshots</id>
+            <name>Artifactory Snapshot Repository</name>
+            <url>${artifactory.url}/libs-snapshot-local</url>
+        </snapshotRepository>
+    </distributionManagement>
+    
+    <!-- Dependencies -->
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.12.0</version>
+        </dependency>
+        
+        <!-- Test Dependencies -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    
+    <build>
+        <plugins>
+            <!-- Compiler Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>11</source>
+                    <target>11</target>
+                </configuration>
+            </plugin>
+            
+            <!-- Resources Plugin - Copy settings.xml from resources to target -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <id>copy-settings</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/resources/config</directory>
+                                    <filtering>true</filtering>
+                                    <includes>
+                                        <include>settings.xml</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <!-- JAR Plugin - Configure JAR creation -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.example.App</mainClass>
+                            <addClasspath>true</addClasspath>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            
+            <!-- Deploy Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>3.1.1</version>
+            </plugin>
+        </plugins>
+    </build>
+    
+</project>
+```
+
+---
+
+## File: `src/main/resources/config/settings.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 
+          http://maven.apache.org/xsd/settings-1.0.0.xsd">
+    
+    <!-- Server configurations for Artifactory -->
+    <servers>
+        <server>
+            <id>artifactory-releases</id>
+            <username>${artifactory.username}</username>
+            <password>${artifactory.password}</password>
+        </server>
+        <server>
+            <id>artifactory-snapshots</id>
+            <username>${artifactory.username}</username>
+            <password>${artifactory.password}</password>
+        </server>
+    </servers>
+    
+    <!-- Optional: Configure mirrors if needed -->
+    <mirrors>
+        <!-- Uncomment if you want to route all requests through Artifactory -->
+        <!--
+        <mirror>
+            <id>artifactory-mirror</id>
+            <mirrorOf>*</mirrorOf>
+            <name>Artifactory Mirror</name>
+            <url>${artifactory.url}/repo</url>
+        </mirror>
+        -->
+    </mirrors>
+    
+</settings>
+```
+
+---
+
+## File: `src/main/java/com/example/App.java`
+
+```java
+package com.example;
+
+import org.apache.commons.lang3.StringUtils;
+
+/**
+ * Sample Application Class
+ * Demonstrates a simple Java application that can be packaged as JAR
+ */
+public class App {
+    
+    public static void main(String[] args) {
+        System.out.println("Hello from Sample JAR Project!");
+        
+        // Using Apache Commons Lang to demonstrate dependency
+        String message = "welcome to artifactory deployment";
+        String capitalizedMessage = StringUtils.capitalize(message);
+        
+        System.out.println("Original: " + message);
+        System.out.println("Capitalized: " + capitalizedMessage);
+        
+        // Display version info
+        System.out.println("Version: " + getVersion());
+        System.out.println("Build Time: " + getBuildTime());
+    }
+    
+    /**
+     * Returns the application version
+     */
+    public static String getVersion() {
+        return "1.0.0";
+    }
+    
+    /**
+     * Returns the build timestamp
+     */
+    public static String getBuildTime() {
+        return java.time.LocalDateTime.now().toString();
+    }
+    
+    /**
+     * Utility method for string processing
+     */
+    public static String processText(String input) {
+        if (StringUtils.isBlank(input)) {
+            return "No input provided";
+        }
+        return StringUtils.reverse(StringUtils.upperCase(input.trim()));
+    }
+}
+```
+
+---
+
+## File: `src/test/java/com/example/AppTest.java`
+
+```java
+package com.example;
+
+import org.junit.Test;
+import static org.junit.Assert.*;
+
+/**
+ * Unit tests for the App class
+ */
+public class AppTest {
+    
+    @Test
+    public void testGetVersion() {
+        String version = App.getVersion();
+        assertNotNull("Version should not be null", version);
+        assertEquals("Version should be 1.0.0", "1.0.0", version);
+    }
+    
+    @Test
+    public void testGetBuildTime() {
+        String buildTime = App.getBuildTime();
+        assertNotNull("Build time should not be null", buildTime);
+        assertFalse("Build time should not be empty", buildTime.isEmpty());
+    }
+    
+    @Test
+    public void testProcessText() {
+        // Test normal input
+        String result = App.processText("hello");
+        assertEquals("OLLEH", result);
+        
+        // Test with spaces
+        String result2 = App.processText("  hello world  ");
+        assertEquals("DLROW OLLEH", result2);
+        
+        // Test empty input
+        String result3 = App.processText("");
+        assertEquals("No input provided", result3);
+        
+        // Test null input
+        String result4 = App.processText(null);
+        assertEquals("No input provided", result4);
+        
+        // Test whitespace only
+        String result5 = App.processText("   ");
+        assertEquals("No input provided", result5);
+    }
+}
+```
+
+---
+
+## File: `deploy.sh`
+
+```bash
+#!/bin/bash
+
+# Deploy script for Maven JAR to Artifactory
+# This script demonstrates the complete deployment process
+
+set -e  # Exit on any error
+
+echo "========================================="
+echo "Maven JAR Deployment to Artifactory"
+echo "========================================="
+
+# Load environment variables from .env file if it exists
+load_env_file() {
+    if [ -f ".env" ]; then
+        echo "📄 Loading environment variables from .env file..."
+        source .env
+        echo "✅ Environment variables loaded from .env"
+    else
+        echo "⚠️  No .env file found. Using existing environment variables or expecting them to be set manually."
+        echo "   You can create a .env file based on .env.example"
+    fi
+}
+
+# Check if environment variables are set
+check_env_vars() {
+    echo "Checking environment variables..."
+    
+    if [ -z "$ARTIFACTORY_URL" ]; then
+        echo "❌ ARTIFACTORY_URL is not set"
+        echo "   Set it with: export ARTIFACTORY_URL='https://your-company.jfrog.io/artifactory'"
+        exit 1
+    fi
+    
+    if [ -z "$ARTIFACTORY_USERNAME" ]; then
+        echo "❌ ARTIFACTORY_USERNAME is not set"
+        echo "   Set it with: export ARTIFACTORY_USERNAME='your-username'"
+        exit 1
+    fi
+    
+    if [ -z "$ARTIFACTORY_PASSWORD" ]; then
+        echo "❌ ARTIFACTORY_PASSWORD is not set"
+        echo "   Set it with: export ARTIFACTORY_PASSWORD='your-password-or-api-key'"
+        exit 1
+    fi
+    
+    echo "✅ All environment variables are set"
+    echo "   URL: $ARTIFACTORY_URL"
+    echo "   Username: $ARTIFACTORY_USERNAME"
+    echo "   Password: [HIDDEN]"
+}
+
+# Clean and prepare
+prepare_build() {
+    echo ""
+    echo "🧹 Cleaning previous builds..."
+    mvn clean
+    
+    echo ""
+    echo "📦 Preparing build (this copies settings.xml to target/)..."
+    mvn validate
+    
+    if [ ! -f "target/settings.xml" ]; then
+        echo "❌ settings.xml was not copied to target directory"
+        echo "   Check if src/main/resources/config/settings.xml exists"
+        exit 1
+    fi
+    
+    echo "✅ Settings file prepared at target/settings.xml"
+}
+
+# Run tests
+run_tests() {
+    echo ""
+    echo "🧪 Running tests..."
+    mvn test
+    echo "✅ All tests passed"
+}
+
+# Build JAR
+build_jar() {
+    echo ""
+    echo "🔨 Building JAR..."
+    mvn package -DskipTests
+    
+    if [ -f "target/sample-jar-project-1.0.0.jar" ]; then
+        echo "✅ JAR built successfully: target/sample-jar-project-1.0.0.jar"
+        echo "   Size: $(du -h target/sample-jar-project-1.0.0.jar | cut -f1)"
+    else
+        echo "❌ JAR build failed"
+        exit 1
+    fi
+}
+
+# Deploy to Artifactory
+deploy_artifact() {
+    echo ""
+    echo "🚀 Deploying to Artifactory..."
+    echo "   Using settings: target/settings.xml"
+    echo "   Target repository: $ARTIFACTORY_URL"
+    
+    # Deploy using the copied settings file
+    mvn deploy -s target/settings.xml -DskipTests
+    
+    echo "✅ Deployment completed successfully!"
+}
+
+# Verify deployment
+verify_deployment() {
+    echo ""
+    echo "🔍 Verifying deployment..."
+    
+    # Construct the expected URL
+    GROUP_PATH=$(echo "com.example" | tr '.' '/')
+    ARTIFACT_URL="$ARTIFACTORY_URL/libs-release-local/$GROUP_PATH/sample-jar-project/1.0.0/"
+    
+    echo "   Artifact should be available at:"
+    echo "   $ARTIFACT_URL"
+    
+    # Try to check if artifact exists (optional - requires curl and credentials)
+    if command -v curl &> /dev/null; then
+        echo ""
+        echo "   Testing artifact accessibility..."
+        HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -u "$ARTIFACTORY_USERNAME:$ARTIFACTORY_PASSWORD" "$ARTIFACT_URL")
+        
+        if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Artifact is accessible via HTTP"
+        else
+            echo "⚠️  HTTP response code: $HTTP_CODE (might be normal for new deployments)"
+        fi
+    fi
+}
+
+# Display summary
+show_summary() {
+    echo ""
+    echo "========================================="
+    echo "📋 Deployment Summary"
+    echo "========================================="
+    echo "Project: com.example:sample-jar-project:1.0.0"
+    echo "Repository: $ARTIFACTORY_URL/libs-release-local"
+    echo "Artifact: sample-jar-project-1.0.0.jar"
+    echo "POM: sample-jar-project-1.0.0.pom"
+    echo ""
+    echo "🎉 Deployment completed successfully!"
+    echo ""
+    echo "Next steps:"
+    echo "1. Check Artifactory web interface"
+    echo "2. Test dependency resolution in other projects"
+    echo "3. Configure automated CI/CD pipeline"
+}
+
+# Main execution
+main() {
+    load_env_file
+    check_env_vars
+    prepare_build
+    run_tests
+    build_jar
+    deploy_artifact
+    verify_deployment
+    show_summary
+}
+
+# Handle script arguments
+case "${1:-}" in
+    --skip-tests)
+        echo "⚠️  Skipping tests as requested"
+        load_env_file
+        check_env_vars
+        prepare_build
+        build_jar
+        deploy_artifact
+        verify_deployment
+        show_summary
+        ;;
+    --help|-h)
+        echo "Usage: $0 [--skip-tests] [--help]"
+        echo ""
+        echo "Options:"
+        echo "  --skip-tests    Skip running tests during deployment"
+        echo "  --help, -h      Show this help message"
+        echo ""
+        echo "Environment variables required:"
+        echo "  ARTIFACTORY_URL      - Your Artifactory base URL"
+        echo "  ARTIFACTORY_USERNAME - Your Artifactory username"
+        echo "  ARTIFACTORY_PASSWORD - Your Artifactory password/API key"
+        ;;
+    "")
+        main
+        ;;
+    *)
+        echo "Unknown option: $1"
+        echo "Run '$0 --help' for usage information"
+        exit 1
+        ;;
+esac
+```
+
+---
+
+## File: `.env.example`
+
+```bash
+# Example environment variables for Artifactory deployment
+# Copy this file to .env and update with your actual values
+# DO NOT commit .env to version control
+
+export ARTIFACTORY_URL="https://your-company.jfrog.io/artifactory"
+export ARTIFACTORY_USERNAME="your-username"
+export ARTIFACTORY_PASSWORD="your-password-or-api-key"
+```
+
+---
+
+## Setup Instructions
+
+### 1. Create Project Directory
+```bash
+mkdir sample-jar-project
+cd sample-jar-project
+```
+
+### 2. Create Directory Structure
+```bash
+mkdir -p src/main/java/com/example
+mkdir -p src/main/resources/config
+mkdir -p src/test/java/com/example
+```
+
+### 3. Create All Files
+Copy all the file contents above into their respective locations:
+- `pom.xml` → project root
+- `settings.xml` → `src/main/resources/config/`
+- `App.java` → `src/main/java/com/example/`
+- `AppTest.java` → `src/test/java/com/example/`
+- `deploy.sh` → project root (and make executable: `chmod +x deploy.sh`)
+- `.env.example` → project root
+
+### 4. Configure Environment Variables
+
+**Option A: Create and use .env file (Recommended)**
+```bash
+# Copy example file
+cp .env.example .env
+
+# Edit .env with your actual Artifactory details
+# The deploy.sh script will automatically load this file
+
+# No need to manually source - deploy.sh handles it!
+```
+
+**Option B: Set environment variables manually**
+```bash
+export ARTIFACTORY_URL="https://your-company.jfrog.io/artifactory"
+export ARTIFACTORY_USERNAME="your-username"
+export ARTIFACTORY_PASSWORD="your-api-key"
+```
+
+### 5. Build and Deploy
+
+**Option 1: Using the deployment script (Recommended)**
+```bash
+./deploy.sh
+```
+
+**Option 2: Manual Maven commands**
+```bash
+# If you have .env file, load it first:
+source .env  # Only needed if running Maven commands manually
+
+# Step 1: Clean and prepare (copies settings.xml to target/)
+mvn clean validate
+
+# Step 2: Run tests
+mvn test
+
+# Step 3: Build JAR
+mvn package
+
+# Step 4: Deploy to Artifactory using our custom settings
+mvn deploy -s target/settings.xml
+```
+
+**Option 3: All-in-one command**
+```bash
+# Load environment variables first (if using manual Maven)
+source .env
+
+# Build and deploy in one step
+mvn clean deploy -s target/settings.xml
+```
+
+### 6. For Snapshot Deployments
+Change version in `pom.xml` to:
+```xml
+<version>1.0.0-SNAPSHOT</version>
+```
+Then deploy normally. Maven will automatically use the snapshot repository.
+
+## How It Works
+
+1. **Validate Phase**: Maven Resources Plugin copies `settings.xml` from `src/main/resources/config/` to `target/` directory, substituting environment variables like `${artifactory.username}` with actual values.
+
+2. **Compile Phase**: Java source code is compiled.
+
+3. **Test Phase**: Unit tests are executed.
+
+4. **Package Phase**: JAR file is created in `target/` directory.
+
+5. **Deploy Phase**: Maven Deploy Plugin uses the processed `target/settings.xml` to authenticate with Artifactory and upload the JAR, POM, and metadata.
+
+## Key Features
+
+- ✅ **Simple deployment** - Just use `mvn deploy -s target/settings.xml`
+- ✅ **Settings in resources** - Configuration stored in project structure
+- ✅ **Environment-based credentials** - Secure credential management
+- ✅ **Automatic file processing** - Maven copies and processes settings automatically
+- ✅ **Complete Java application** - Working app with dependencies and tests
+- ✅ **No complex plugins** - Uses standard Maven deploy plugin only
+- ✅ **No profiles** - Simple, straightforward configuration
+
+## Verification
+
+After successful deployment, check your Artifactory web interface at:
+- Releases: `https://your-artifactory-url/artifactory/libs-release-local/com/example/sample-jar-project/1.0.0/`
+- Snapshots: `https://your-artifactory-url/artifactory/libs-snapshot-local/com/example/sample-jar-project/1.0.0-SNAPSHOT/`
+
+This project demonstrates the simplest way to deploy Maven JARs to Artifactory using only standard Maven functionality!
+```
+
+Perfect! Now the `deploy.sh` script automatically loads the `.env` file. Here's how it works:
+
+## **How the Updated deploy.sh Works**
+
+### **1. Automatic .env Loading**
+The script now includes a `load_env_file()` function that:
+- Checks if `.env` file exists
+- Automatically runs `source .env` if found
+- Shows a helpful message if no `.env` file exists
+
+### **2. Script Flow**
+```bash
+./deploy.sh
+```
+
+**What happens internally:**
+1. **Load .env**: Script automatically runs `source .env`
+2. **Check variables**: Verifies all required environment variables are set
+3. **Build and deploy**: Continues with the Maven build and deployment
+
+## **Benefits of This Approach**
+
+### **✅ Automatic Loading**
+```bash
+# OLD WAY (manual):
+source .env
+./deploy.sh
+
+# NEW WAY (automatic):
+./deploy.sh  # Script loads .env automatically!
+```
+
+### **✅ User-Friendly**
+- Script tells you when it loads the `.env` file
+- Shows helpful messages if `.env` is missing
+- Works whether you have `.env` or set variables manually
+
+### **✅ Flexible**
+- If `.env` exists → automatically loaded
+- If `.env` doesn't exist → uses existing environment variables
+- If no variables set → gives clear error messages
+
+## **Different Usage Scenarios**
+
+### **Scenario 1: Using .env file (Most Common)**
+```bash
+# 1. Create your .env file
+cp .env.example .env
+# Edit .env with your credentials
+
+# 2. Run deployment (automatically loads .env)
+./deploy.sh
+```
+
+### **Scenario 2: Pre-set environment variables**
+```bash
+# 1. Set variables manually
+export ARTIFACTORY_URL="https://mycompany.jfrog.io/artifactory"
+export ARTIFACTORY_USERNAME="john.doe"
+export ARTIFACTORY_PASSWORD="my-api-key"
+
+# 2. Run deployment (skips .env loading)
+./deploy.sh
+```
+
+### **Scenario 3: Manual Maven (still need to load .env yourself)**
+```bash
+# For manual Maven commands, you still need to load .env manually
+source .env
+mvn clean deploy -s target/settings.xml
+```
+
+## **What You'll See When Running**
+
+```bash
+$ ./deploy.sh
+
+=========================================
+Maven JAR Deployment to Artifactory
+=========================================
+📄 Loading environment variables from .env file...
+✅ Environment variables loaded from .env
+Checking environment variables...
+✅ All environment variables are set
+   URL: https://mycompany.jfrog.io/artifactory
+   Username: john.doe
+   Password: [HIDDEN]
+
+🧹 Cleaning previous builds...
+...
+```
+
+## **Error Handling**
+
+If `.env` file doesn't exist:
+```bash
+⚠️  No .env file found. Using existing environment variables or expecting them to be set manually.
+   You can create a .env file based on .env.example
+```
+
+If variables aren't set:
+```bash
+❌ ARTIFACTORY_URL is not set
+   Set it with: export ARTIFACTORY_URL='https://your-company.jfrog.io/artifactory'
+```
+
+## **Summary**
+
+Now you have the best of both worlds:
+- **Easy automation**: Just run `./deploy.sh` and everything works
+- **No manual steps**: Script automatically loads `.env` if it exists
+- **Flexible**: Works with or without `.env` file
+- **Clear feedback**: Script tells you exactly what's happening
+
+The deployment workflow is now much simpler - just create your `.env` file once and run `./deploy.sh` whenever you want to deploy!
+
+
+
+## Prompt:
+recreate the file in a markdown file
+
+
+
+## Response:
+
+
+**Complete Maven Project for Artifactory Deployment**
+
+```markdown
+# Complete Maven Project - JAR Deployment to Artifactory
+
+This is a complete sample Maven project that demonstrates how to build a JAR and deploy it to Artifactory with settings.xml stored in the resources directory.
+
+## Project Structure
+```
+sample-jar-project/
+├── pom.xml
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/
+│   │   │       └── example/
+│   │   │           └── App.java
+│   │   └── resources/
+│   │       └── config/
+│   │           └── settings.xml
+│   └── test/
+│       └── java/
+│           └── com/
+│               └── example/
+│                   └── AppTest.java
+├── deploy.sh
+├── .env.example
+└── README.md
+```
+
+---
+
+## File: `pom.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    
+    <modelVersion>4.0.0</modelVersion>
+    
+    <!-- Project Information -->
+    <groupId>com.example</groupId>
+    <artifactId>sample-jar-project</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+    
+    <name>Sample JAR Project</name>
+    <description>A sample Maven project to demonstrate JAR deployment to Artifactory</description>
+    
+    <!-- Properties -->
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        
+        <!-- Artifactory Configuration - Override these via environment variables -->
+        <artifactory.url>${env.ARTIFACTORY_URL}</artifactory.url>
+        <artifactory.username>${env.ARTIFACTORY_USERNAME}</artifactory.username>
+        <artifactory.password>${env.ARTIFACTORY_PASSWORD}</artifactory.password>
+    </properties>
+    
+    <!-- Distribution Management - Where to deploy artifacts -->
+    <distributionManagement>
+        <repository>
+            <id>artifactory-releases</id>
+            <name>Artifactory Release Repository</name>
+            <url>${artifactory.url}/libs-release-local</url>
+        </repository>
+        <snapshotRepository>
+            <id>artifactory-snapshots</id>
+            <name>Artifactory Snapshot Repository</name>
+            <url>${artifactory.url}/libs-snapshot-local</url>
+        </snapshotRepository>
+    </distributionManagement>
+    
+    <!-- Dependencies -->
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.12.0</version>
+        </dependency>
+        
+        <!-- Test Dependencies -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    
+    <build>
+        <plugins>
+            <!-- Compiler Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>11</source>
+                    <target>11</target>
+                </configuration>
+            </plugin>
+            
+            <!-- Resources Plugin - Copy settings.xml from resources to target -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <id>copy-settings</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/resources/config</directory>
+                                    <filtering>true</filtering>
+                                    <includes>
+                                        <include>settings.xml</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <!-- JAR Plugin - Configure JAR creation -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.example.App</mainClass>
+                            <addClasspath>true</addClasspath>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            
+            <!-- Deploy Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>3.1.1</version>
+            </plugin>
+        </plugins>
+    </build>
+    
+</project>
+```
+
+---
+
+## File: `src/main/resources/config/settings.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 
+          http://maven.apache.org/xsd/settings-1.0.0.xsd">
+    
+    <!-- Server configurations for Artifactory -->
+    <servers>
+        <server>
+            <id>artifactory-releases</id>
+            <username>${artifactory.username}</username>
+            <password>${artifactory.password}</password>
+        </server>
+        <server>
+            <id>artifactory-snapshots</id>
+            <username>${artifactory.username}</username>
+            <password>${artifactory.password}</password>
+        </server>
+    </servers>
+    
+    <!-- Optional: Configure mirrors if needed -->
+    <mirrors>
+        <!-- Uncomment if you want to route all requests through Artifactory -->
+        <!--
+        <mirror>
+            <id>artifactory-mirror</id>
+            <mirrorOf>*</mirrorOf>
+            <name>Artifactory Mirror</name>
+            <url>${artifactory.url}/repo</url>
+        </mirror>
+        -->
+    </mirrors>
+    
+</settings>
+```
+
+---
+
+## File: `src/main/java/com/example/App.java`
+
+```java
+package com.example;
+
+import org.apache.commons.lang3.StringUtils;
+
+/**
+ * Sample Application Class
+ * Demonstrates a simple Java application that can be packaged as JAR
+ */
+public class App {
+    
+    public static void main(String[] args) {
+        System.out.println("Hello from Sample JAR Project!");
+        
+        // Using Apache Commons Lang to demonstrate dependency
+        String message = "welcome to artifactory deployment";
+        String capitalizedMessage = StringUtils.capitalize(message);
+        
+        System.out.println("Original: " + message);
+        System.out.println("Capitalized: " + capitalizedMessage);
+        
+        // Display version info
+        System.out.println("Version: " + getVersion());
+        System.out.println("Build Time: " + getBuildTime());
+    }
+    
+    /**
+     * Returns the application version
+     */
+    public static String getVersion() {
+        return "1.0.0";
+    }
+    
+    /**
+     * Returns the build timestamp
+     */
+    public static String getBuildTime() {
+        return java.time.LocalDateTime.now().toString();
+    }
+    
+    /**
+     * Utility method for string processing
+     */
+    public static String processText(String input) {
+        if (StringUtils.isBlank(input)) {
+            return "No input provided";
+        }
+        return StringUtils.reverse(StringUtils.upperCase(input.trim()));
+    }
+}
+```
+
+---
+
+## File: `src/test/java/com/example/AppTest.java`
+
+```java
+package com.example;
+
+import org.junit.Test;
+import static org.junit.Assert.*;
+
+/**
+ * Unit tests for the App class
+ */
+public class AppTest {
+    
+    @Test
+    public void testGetVersion() {
+        String version = App.getVersion();
+        assertNotNull("Version should not be null", version);
+        assertEquals("Version should be 1.0.0", "1.0.0", version);
+    }
+    
+    @Test
+    public void testGetBuildTime() {
+        String buildTime = App.getBuildTime();
+        assertNotNull("Build time should not be null", buildTime);
+        assertFalse("Build time should not be empty", buildTime.isEmpty());
+    }
+    
+    @Test
+    public void testProcessText() {
+        // Test normal input
+        String result = App.processText("hello");
+        assertEquals("OLLEH", result);
+        
+        // Test with spaces
+        String result2 = App.processText("  hello world  ");
+        assertEquals("DLROW OLLEH", result2);
+        
+        // Test empty input
+        String result3 = App.processText("");
+        assertEquals("No input provided", result3);
+        
+        // Test null input
+        String result4 = App.processText(null);
+        assertEquals("No input provided", result4);
+        
+        // Test whitespace only
+        String result5 = App.processText("   ");
+        assertEquals("No input provided", result5);
+    }
+}
+```
+
+---
+
+## File: `deploy.sh`
+
+```bash
+#!/bin/bash
+
+# Deploy script for Maven JAR to Artifactory
+# This script demonstrates the complete deployment process
+
+set -e  # Exit on any error
+
+echo "========================================="
+echo "Maven JAR Deployment to Artifactory"
+echo "========================================="
+
+# Load environment variables from .env file if it exists
+load_env_file() {
+    if [ -f ".env" ]; then
+        echo "📄 Loading environment variables from .env file..."
+        source .env
+        echo "✅ Environment variables loaded from .env"
+    else
+        echo "⚠️  No .env file found. Using existing environment variables or expecting them to be set manually."
+        echo "   You can create a .env file based on .env.example"
+    fi
+}
+
+# Check if environment variables are set
+check_env_vars() {
+    echo "Checking environment variables..."
+    
+    if [ -z "$ARTIFACTORY_URL" ]; then
+        echo "❌ ARTIFACTORY_URL is not set"
+        echo "   Set it with: export ARTIFACTORY_URL='https://your-company.jfrog.io/artifactory'"
+        exit 1
+    fi
+    
+    if [ -z "$ARTIFACTORY_USERNAME" ]; then
+        echo "❌ ARTIFACTORY_USERNAME is not set"
+        echo "   Set it with: export ARTIFACTORY_USERNAME='your-username'"
+        exit 1
+    fi
+    
+    if [ -z "$ARTIFACTORY_PASSWORD" ]; then
+        echo "❌ ARTIFACTORY_PASSWORD is not set"
+        echo "   Set it with: export ARTIFACTORY_PASSWORD='your-password-or-api-key'"
+        exit 1
+    fi
+    
+    echo "✅ All environment variables are set"
+    echo "   URL: $ARTIFACTORY_URL"
+    echo "   Username: $ARTIFACTORY_USERNAME"
+    echo "   Password: [HIDDEN]"
+}
+
+# Clean and prepare
+prepare_build() {
+    echo ""
+    echo "🧹 Cleaning previous builds..."
+    mvn clean
+    
+    echo ""
+    echo "📦 Preparing build (this copies settings.xml to target/)..."
+    mvn validate
+    
+    if [ ! -f "target/settings.xml" ]; then
+        echo "❌ settings.xml was not copied to target directory"
+        echo "   Check if src/main/resources/config/settings.xml exists"
+        exit 1
+    fi
+    
+    echo "✅ Settings file prepared at target/settings.xml"
+}
+
+# Run tests
+run_tests() {
+    echo ""
+    echo "🧪 Running tests..."
+    mvn test
+    echo "✅ All tests passed"
+}
+
+# Build JAR
+build_jar() {
+    echo ""
+    echo "🔨 Building JAR..."
+    mvn package -DskipTests
+    
+    if [ -f "target/sample-jar-project-1.0.0.jar" ]; then
+        echo "✅ JAR built successfully: target/sample-jar-project-1.0.0.jar"
+        echo "   Size: $(du -h target/sample-jar-project-1.0.0.jar | cut -f1)"
+    else
+        echo "❌ JAR build failed"
+        exit 1
+    fi
+}
+
+# Deploy to Artifactory
+deploy_artifact() {
+    echo ""
+    echo "🚀 Deploying to Artifactory..."
+    echo "   Using settings: target/settings.xml"
+    echo "   Target repository: $ARTIFACTORY_URL"
+    
+    # Deploy using the copied settings file
+    mvn deploy -s target/settings.xml -DskipTests
+    
+    echo "✅ Deployment completed successfully!"
+}
+
+# Verify deployment
+verify_deployment() {
+    echo ""
+    echo "🔍 Verifying deployment..."
+    
+    # Construct the expected URL
+    GROUP_PATH=$(echo "com.example" | tr '.' '/')
+    ARTIFACT_URL="$ARTIFACTORY_URL/libs-release-local/$GROUP_PATH/sample-jar-project/1.0.0/"
+    
+    echo "   Artifact should be available at:"
+    echo "   $ARTIFACT_URL"
+    
+    # Try to check if artifact exists (optional - requires curl and credentials)
+    if command -v curl &> /dev/null; then
+        echo ""
+        echo "   Testing artifact accessibility..."
+        HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -u "$ARTIFACTORY_USERNAME:$ARTIFACTORY_PASSWORD" "$ARTIFACT_URL")
+        
+        if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Artifact is accessible via HTTP"
+        else
+            echo "⚠️  HTTP response code: $HTTP_CODE (might be normal for new deployments)"
+        fi
+    fi
+}
+
+# Display summary
+show_summary() {
+    echo ""
+    echo "========================================="
+    echo "📋 Deployment Summary"
+    echo "========================================="
+    echo "Project: com.example:sample-jar-project:1.0.0"
+    echo "Repository: $ARTIFACTORY_URL/libs-release-local"
+    echo "Artifact: sample-jar-project-1.0.0.jar"
+    echo "POM: sample-jar-project-1.0.0.pom"
+    echo ""
+    echo "🎉 Deployment completed successfully!"
+    echo ""
+    echo "Next steps:"
+    echo "1. Check Artifactory web interface"
+    echo "2. Test dependency resolution in other projects"
+    echo "3. Configure automated CI/CD pipeline"
+}
+
+# Main execution
+main() {
+    load_env_file
+    check_env_vars
+    prepare_build
+    run_tests
+    build_jar
+    deploy_artifact
+    verify_deployment
+    show_summary
+}
+
+# Handle script arguments
+case "${1:-}" in
+    --skip-tests)
+        echo "⚠️  Skipping tests as requested"
+        load_env_file
+        check_env_vars
+        prepare_build
+        build_jar
+        deploy_artifact
+        verify_deployment
+        show_summary
+        ;;
+    --help|-h)
+        echo "Usage: $0 [--skip-tests] [--help]"
+        echo ""
+        echo "Options:"
+        echo "  --skip-tests    Skip running tests during deployment"
+        echo "  --help, -h      Show this help message"
+        echo ""
+        echo "Environment variables required:"
+        echo "  ARTIFACTORY_URL      - Your Artifactory base URL"
+        echo "  ARTIFACTORY_USERNAME - Your Artifactory username"
+        echo "  ARTIFACTORY_PASSWORD - Your Artifactory password/API key"
+        ;;
+    "")
+        main
+        ;;
+    *)
+        echo "Unknown option: $1"
+        echo "Run '$0 --help' for usage information"
+        exit 1
+        ;;
+esac
+```
+
+---
+
+## File: `.env.example`
+
+```bash
+# Example environment variables for Artifactory deployment
+# Copy this file to .env and update with your actual values
+# DO NOT commit .env to version control
+
+export ARTIFACTORY_URL="https://your-company.jfrog.io/artifactory"
+export ARTIFACTORY_USERNAME="your-username"
+export ARTIFACTORY_PASSWORD="your-password-or-api-key"
+```
+
+---
+
+## File: `.gitignore`
+
+```gitignore
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Environment files - DO NOT COMMIT
+.env
+*.env
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.eclipse/
+.metadata/
+.settings/
+.project
+.classpath
+
+# OS files
+.DS_Store
+Thumbs.db
+```
+
+---
+
+## Setup Instructions
+
+### 1. Create Project Directory
+```bash
+mkdir sample-jar-project
+cd sample-jar-project
+```
+
+### 2. Create Directory Structure
+```bash
+mkdir -p src/main/java/com/example
+mkdir -p src/main/resources/config
+mkdir -p src/test/java/com/example
+```
+
+### 3. Create All Files
+Copy all the file contents above into their respective locations:
+- `pom.xml` → project root
+- `settings.xml` → `src/main/resources/config/`
+- `App.java` → `src/main/java/com/example/`
+- `AppTest.java` → `src/test/java/com/example/`
+- `deploy.sh` → project root (and make executable: `chmod +x deploy.sh`)
+- `.env.example` → project root
+- `.gitignore` → project root
+
+### 4. Configure Environment Variables
+
+**Option A: Create and use .env file (Recommended)**
+```bash
+# Copy example file
+cp .env.example .env
+
+# Edit .env with your actual Artifactory details
+# The deploy.sh script will automatically load this file
+
+# No need to manually source - deploy.sh handles it!
+```
+
+**Option B: Set environment variables manually**
+```bash
+export ARTIFACTORY_URL="https://your-company.jfrog.io/artifactory"
+export ARTIFACTORY_USERNAME="your-username"
+export ARTIFACTORY_PASSWORD="your-api-key"
+```
+
+### 5. Build and Deploy
+
+**Option 1: Using the deployment script (Recommended)**
+```bash
+./deploy.sh
+```
+
+**Option 2: Manual Maven commands**
+```bash
+# If you have .env file, load it first:
+source .env  # Only needed if running Maven commands manually
+
+# Step 1: Clean and prepare (copies settings.xml to target/)
+mvn clean validate
+
+# Step 2: Run tests
+mvn test
+
+# Step 3: Build JAR
+mvn package
+
+# Step 4: Deploy to Artifactory using our custom settings
+mvn deploy -s target/settings.xml
+```
+
+**Option 3: All-in-one command**
+```bash
+# Load environment variables first (if using manual Maven)
+source .env
+
+# Build and deploy in one step
+mvn clean deploy -s target/settings.xml
+```
+
+### 6. For Snapshot Deployments
+Change version in `pom.xml` to:
+```xml
+<version>1.0.0-SNAPSHOT</version>
+```
+Then deploy normally. Maven will automatically use the snapshot repository.
+
+## How It Works
+
+### Environment Variables Flow
+1. **Load .env**: Script automatically runs `source .env` (if file exists)
+2. **Maven Properties**: `pom.xml` reads environment variables via `${env.VARIABLE_NAME}`
+3. **Settings Processing**: Maven copies `settings.xml` from resources to target/, substituting variables
+4. **Deployment**: Maven uses processed `target/settings.xml` to authenticate with Artifactory
+
+### Build Lifecycle
+1. **Validate Phase**: Maven Resources Plugin copies `settings.xml` from `src/main/resources/config/` to `target/` directory, substituting environment variables like `${artifactory.username}` with actual values.
+
+2. **Compile Phase**: Java source code is compiled.
+
+3. **Test Phase**: Unit tests are executed.
+
+4. **Package Phase**: JAR file is created in `target/` directory.
+
+5. **Deploy Phase**: Maven Deploy Plugin uses the processed `target/settings.xml` to authenticate with Artifactory and upload the JAR, POM, and metadata.
+
+## Key Features
+
+- ✅ **Simple deployment** - Just use `mvn deploy -s target/settings.xml`
+- ✅ **Settings in resources** - Configuration stored in project structure
+- ✅ **Automatic .env loading** - Script handles environment variables automatically
+- ✅ **Environment-based credentials** - Secure credential management
+- ✅ **Automatic file processing** - Maven copies and processes settings automatically
+- ✅ **Complete Java application** - Working app with dependencies and tests
+- ✅ **No complex plugins** - Uses standard Maven deploy plugin only
+- ✅ **No profiles** - Simple, straightforward configuration
+
+## Verification
+
+After successful deployment, check your Artifactory web interface at:
+- Releases: `https://your-artifactory-url/artifactory/libs-release-local/com/example/sample-jar-project/1.0.0/`
+- Snapshots: `https://your-artifactory-url/artifactory/libs-snapshot-local/com/example/sample-jar-project/1.0.0-SNAPSHOT/`
+
+## Troubleshooting
+
+### Environment Variables Not Loading
+```bash
+# Check if .env file exists and has correct content
+cat .env
+
+# Verify variables are set after running deploy.sh
+echo $ARTIFACTORY_URL
+echo $ARTIFACTORY_USERNAME
+```
+
+### Settings File Not Found
+```bash
+# Make sure to run validate phase first
+mvn clean validate
+
+# Check if settings.xml was copied
+ls -la target/settings.xml
+```
+
+### Authentication Failed
+- Verify credentials in .env file
+- Check if using API key instead of password
+- Ensure server IDs match between pom.xml and settings.xml
+
+This project demonstrates the simplest way to deploy Maven JARs to Artifactory using only standard Maven functionality with automatic environment variable loading!
+```
+
+Perfect! I've created a complete markdown file that contains the entire Maven project with the improved `deploy.sh` script that automatically loads the `.env` file.
+
+## **Key Improvements in This Markdown Version:**
+
+### **1. Automatic .env Loading**
+- The `deploy.sh` script now includes a `load_env_file()` function
+- Automatically runs `source .env` if the file exists
+- No more manual `source .env` step required
+
+### **2. Added .gitignore File**
+- Includes proper exclusions for Maven, IDE files, and environment files
+- Ensures `.env` files are never committed to version control
+
+### **3. Enhanced Documentation**
+- Clear step-by-step setup instructions
+- Multiple deployment options explained
+- Detailed "How It Works" section
+- Troubleshooting guide
+
+### **4. Simplified User Experience**
+**Old workflow:**
+```bash
+source .env
+./deploy.sh
+```
+
+**New workflow:**
+```bash
+./deploy.sh  # Automatically loads .env!
+```
+
+### **5. Complete Project Structure**
+The markdown now contains everything you need:
+- All 7 required files with complete content
+- Directory structure
+- Setup instructions
+- Usage examples
+- Troubleshooting tips
+
+## **Usage:**
+1. Copy the contents of each file section into the corresponding files
+2. Create your `.env` file from the `.env.example`
+3. Run `./deploy.sh` - it handles everything automatically!
+
+This is now a complete, production-ready Maven project template for deploying JARs to Artifactory with all the best practices included.
 
 
 
